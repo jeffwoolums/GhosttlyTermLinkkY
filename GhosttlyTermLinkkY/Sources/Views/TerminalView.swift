@@ -20,6 +20,7 @@ struct TerminalView: View {
             VStack(spacing: 0) {
                 ScrollViewReader { proxy in
                     ScrollView {
+                        Spacer()
                         LazyVStack(alignment: .leading, spacing: 0) {
                             ForEach(terminalSession.outputLines) { line in
                                 TerminalLineView(line: line, fontSize: settingsManager.fontSize)
@@ -29,6 +30,7 @@ struct TerminalView: View {
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                     }
+                    .frame(maxHeight: .infinity)
                     .background(Color.black)
                     .onChange(of: terminalSession.outputLines.count) { _, _ in
                         if let lastLine = terminalSession.outputLines.last {

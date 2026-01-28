@@ -9,7 +9,7 @@ import SwiftUI
 @MainActor
 class SettingsManager: ObservableObject {
     // Terminal settings
-    @AppStorage("fontSize") var fontSize: Double = 14
+    @AppStorage("fontSize") var fontSize: Double = 16
     @AppStorage("hapticFeedback") var hapticFeedback: Bool = true
     @AppStorage("keepScreenOn") var keepScreenOn: Bool = true
     
@@ -71,7 +71,7 @@ class SettingsManager: ObservableObject {
     // MARK: - Reset
     
     func resetToDefaults() {
-        fontSize = 14
+        fontSize = 16
         hapticFeedback = true
         keepScreenOn = true
         connectionTimeout = 30
