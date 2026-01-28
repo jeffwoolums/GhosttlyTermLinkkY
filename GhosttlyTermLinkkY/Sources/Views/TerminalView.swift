@@ -16,106 +16,111 @@ struct TerminalView: View {
     @FocusState private var isInputFocused: Bool
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                if !connectionManager.isConnected && terminalSession.outputLines.isEmpty {
-                    WelcomeView(connectionManager: connectionManager)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    ScrollViewReader { proxy in
-                        ScrollView {
-                            Spacer()
-                            LazyVStack(alignment: .leading, spacing: 0) {
-                                ForEach(terminalSession.outputLines) { line in
-                                    TerminalLineView(line: line, fontSize: settingsManager.fontSize)
-                                        .id(line.id)
+        GeometryReader { geometry in
+            NavigationStack {
+                VStack(spacing: 0) {
+                    // Terminal output area - takes all available height minus input bar
+                    if !connectionManager.isConnected && terminalSession.outputLines.isEmpty {
+                        WelcomeView(connectionManager: connectionManager)
+                            .frame(width: geometry.size.width, height: geometry.size.height - 120)
+                    } else {
+                        ScrollViewReader { proxy in
+                            ScrollView {
+                                LazyVStack(alignment: .leading, spacing: 0) {
+                                    ForEach(terminalSession.outputLines) { line in
+                                        TerminalLineView(line: line, fontSize: settingsManager.fontSize)
+                                            .id(line.id)
+                                    }
+                                }
+                                .frame(minHeight: geometry.size.height - 120, alignment: .bottom)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                            }
+                            .frame(width: geometry.size.width, height: geometry.size.height - 120)
+                            .background(Color.black)
+                            .onChange(of: terminalSession.outputLines.count) { _, _ in
+                                if let lastLine = terminalSession.outputLines.last {
+                                    withAnimation(.easeOut(duration: 0.1)) {
+                                        proxy.scrollTo(lastLine.id, anchor: .bottom)
+                                    }
                                 }
                             }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
                         }
-                        .frame(maxHeight: .infinity)
-                        .background(Color.black)
-                        .onChange(of: terminalSession.outputLines.count) { _, _ in
-                            if let lastLine = terminalSession.outputLines.last {
-                                withAnimation(.easeOut(duration: 0.1)) {
-                                    proxy.scrollTo(lastLine.id, anchor: .bottom)
-                                }
+                    }
+
+                    Divider().background(Color.green.opacity(0.5))
+
+                    // Input bar - fixed height at bottom
+                    HStack(spacing: 8) {
+                        Button {
+                            showingQuickCommands = true
+                        } label: {
+                            Image(systemName: "bolt.fill")
+                                .foregroundColor(.green)
+                                .frame(width: 32, height: 32)
+                        }
+
+                        commandInputField
+
+                        Button {
+                            sendCommand()
+                        } label: {
+                            Image(systemName: "arrow.up.circle.fill")
+                                .font(.title2)
+                                .foregroundColor(inputText.isEmpty ? .gray : .green)
+                        }
+                        .disabled(inputText.isEmpty)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .frame(height: 60)
+                    .background(Color.black.opacity(0.95))
+                }
+                .background(Color.black)
+                .navigationTitle("Terminal")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        ConnectionStatusBadge()
+                    }
+
+                    ToolbarItem(placement: .primaryAction) {
+                        Menu {
+                            Button("Clear Screen") { terminalSession.clear() }
+                            Button("List Sessions") { terminalSession.listSessions() }
+                            Button("Reconnect") {
+                                Task { await connectionManager.reconnect() }
                             }
+                            Divider()
+                            Button("Send Ctrl+C", role: .destructive) {
+                                terminalSession.sendControlC()
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
                         }
                     }
                 }
-
-                Divider().background(Color.green.opacity(0.5))
-
-                HStack(spacing: 8) {
-                    Button {
-                        showingQuickCommands = true
-                    } label: {
-                        Image(systemName: "bolt.fill")
-                            .foregroundColor(.green)
-                            .frame(width: 32, height: 32)
-                    }
-
-                    commandInputField
-
-                    Button {
+                .sheet(isPresented: $showingQuickCommands) {
+                    QuickCommandsSheet(onSelect: { command in
+                        inputText = command
+                        showingQuickCommands = false
                         sendCommand()
-                    } label: {
-                        Image(systemName: "arrow.up.circle.fill")
-                            .font(.title2)
-                            .foregroundColor(inputText.isEmpty ? .gray : .green)
-                    }
-                    .disabled(inputText.isEmpty)
+                    })
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(Color.black.opacity(0.95))
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.black)
-            .navigationTitle("Terminal")
-            .navigationBarTitleDisplayModeInline()
-            .toolbar {
-                ToolbarItem(placement: .navigation) {
-                    ConnectionStatusBadge()
-                }
-
-                ToolbarItem(placement: .primaryAction) {
-                    Menu {
-                        Button("Clear Screen") { terminalSession.clear() }
-                        Button("List Sessions") { terminalSession.listSessions() }
-                        Button("Reconnect") {
-                            Task { await connectionManager.reconnect() }
-                        }
-                        Divider()
-                        Button("Send Ctrl+C", role: .destructive) {
-                            terminalSession.sendControlC()
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
+                .onAppear {
+                    terminalSession.connectionManager = connectionManager
+                    if connectionManager.isConnected {
+                        terminalSession.startSession()
                     }
                 }
-            }
-            .sheet(isPresented: $showingQuickCommands) {
-                QuickCommandsSheet(onSelect: { command in
-                    inputText = command
-                    showingQuickCommands = false
-                    sendCommand()
-                })
-            }
-            .onAppear {
-                terminalSession.connectionManager = connectionManager
-                if connectionManager.isConnected {
-                    terminalSession.startSession()
-                }
-            }
-            .onChange(of: connectionManager.connectionState) { _, newState in
-                if case .connected = newState {
-                    terminalSession.startSession()
+                .onChange(of: connectionManager.connectionState) { _, newState in
+                    if case .connected = newState {
+                        terminalSession.startSession()
+                    }
                 }
             }
         }
+        .ignoresSafeArea(.keyboard)
     }
 
     @ViewBuilder
@@ -216,58 +221,63 @@ struct WelcomeView: View {
     let connectionManager: ConnectionManager
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-            VStack(spacing: 24) {
-            Image(systemName: "terminal")
-                .font(.system(size: 48))
-                .foregroundColor(.green.opacity(0.8))
+        ZStack {
+            Color.black.ignoresSafeArea()
 
-            VStack(spacing: 8) {
-                Text("GhosttlyTermLinkkY")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
+            VStack(spacing: 32) {
+                Spacer()
 
-                Text("Remote terminal via Tailscale")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-
-            if connectionManager.hosts.isEmpty {
-                VStack(spacing: 12) {
-                    Text("No hosts configured")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Text("Tap \"Hosts\" to add your server")
-                        .font(.caption)
+                VStack(spacing: 16) {
+                    Image(systemName: "terminal")
+                        .font(.system(size: 72))
                         .foregroundColor(.green)
+
+                    Text("GhosttlyTermLinkkY")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+
+                    Text("Remote terminal monitoring")
+                        .font(.title3)
+                        .foregroundColor(.secondary)
                 }
-            } else {
-                VStack(spacing: 12) {
+
+                Spacer()
+
+                if connectionManager.hosts.isEmpty {
+                    VStack(spacing: 16) {
+                        Text("No servers configured")
+                            .font(.title3)
+                            .foregroundColor(.secondary)
+                        Text("Tap \"Hosts\" tab below to add your server")
+                            .font(.body)
+                            .foregroundColor(.green)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(.horizontal, 40)
+                } else {
                     Button {
                         Task { await connectionManager.connect(to: connectionManager.hosts[0]) }
                     } label: {
-                        HStack(spacing: 8) {
+                        HStack(spacing: 12) {
                             Image(systemName: "play.circle.fill")
+                                .font(.title2)
                             Text("Connect to \(connectionManager.hosts[0].name)")
+                                .font(.title3)
+                                .fontWeight(.semibold)
                         }
-                        .font(.system(.body, design: .monospaced))
                         .foregroundColor(.black)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
+                        .padding(.horizontal, 32)
+                        .padding(.vertical, 16)
                         .background(Color.green)
-                        .cornerRadius(12)
+                        .cornerRadius(16)
                     }
-
-                    Text("or tap \"Hosts\" to manage servers")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
                 }
+
+                Spacer()
             }
-            Spacer()
+            .padding()
         }
-        .background(Color.black)
     }
 }
 
@@ -306,7 +316,7 @@ struct QuickCommandsSheet: View {
                 }
             }
             .navigationTitle("Quick Commands")
-            .navigationBarTitleDisplayModeInline()
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
