@@ -51,7 +51,9 @@ struct HostsView: View {
                     }
                 }
             }
+            .listStyle(.plain)
             .navigationTitle("Hosts")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {

@@ -39,7 +39,6 @@ struct ContentView: View {
                 .tag(Tab.settings)
         }
         .tint(.green)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
