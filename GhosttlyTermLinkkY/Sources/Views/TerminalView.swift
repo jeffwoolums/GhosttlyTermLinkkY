@@ -2,8 +2,7 @@
 //  TerminalView.swift
 //  GhosttlyTermLinkkY
 //
-//  Main terminal interface. Connects to server, streams output,
-//  supports tmux session selection.
+//  Main terminal interface with ANSI color rendering.
 //
 
 import SwiftUI
@@ -14,14 +13,11 @@ struct TerminalView: View {
     @StateObject private var terminalSession = TerminalSession()
     @State private var inputText: String = ""
     @State private var showingQuickCommands = false
-    @State private var showingTmuxPicker = false
-    @State private var tmuxSessions: [String] = []
     @FocusState private var isInputFocused: Bool
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Terminal output
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 0) {
@@ -45,7 +41,6 @@ struct TerminalView: View {
 
                 Divider().background(Color.green.opacity(0.5))
 
-                // Input area
                 HStack(spacing: 8) {
                     Button {
                         showingQuickCommands = true
@@ -143,21 +138,36 @@ struct TerminalView: View {
     }
 }
 
+/// Renders a single terminal line with full ANSI color support.
+/// Output lines are parsed through ANSIParser for multi-color spans.
+/// Input/system/error lines use their fixed type colors.
 struct TerminalLineView: View {
     let line: TerminalLine
     let fontSize: Double
 
     var body: some View {
-        Text(attributedString)
+        Text(renderedText)
             .font(.system(size: CGFloat(fontSize), design: .monospaced))
             .textSelection(.enabled)
             .lineLimit(nil)
     }
 
-    private var attributedString: AttributedString {
-        var attributed = AttributedString(line.text)
-        attributed.foregroundColor = line.color
-        return attributed
+    private var renderedText: AttributedString {
+        switch line.type {
+        case .output:
+            // Full ANSI parsing for server output
+            return ANSIParser.parse(line.text, defaultColor: .white)
+        case .input:
+            return ANSIParser.parse(line.text, defaultColor: .green)
+        case .error:
+            var s = AttributedString(line.text)
+            s.foregroundColor = .red
+            return s
+        case .system:
+            var s = AttributedString(line.text)
+            s.foregroundColor = .yellow
+            return s
+        }
     }
 }
 
@@ -202,8 +212,8 @@ struct QuickCommandsSheet: View {
         ("Claude Code", "claude"),
         ("List Files", "ls -la"),
         ("Git Status", "git status"),
-        ("Git Pull", "git pull"),
         ("Git Log", "git log --oneline -10"),
+        ("Git Pull", "git pull"),
         ("NPM Install", "npm install"),
         ("NPM Run Dev", "npm run dev"),
         ("Python", "python3"),
