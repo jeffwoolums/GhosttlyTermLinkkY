@@ -1,4 +1,4 @@
-// swift-tools-version: 5.9
+// swift-tools-version: 5.10
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -14,10 +14,7 @@ let package = Package(
             name: "GhosttlyTermLinkkY",
             targets: ["GhosttlyTermLinkkY"]),
     ],
-    dependencies: [
-        // For production SSH support, add:
-        // .package(url: "https://github.com/Lakr233/SwiftCitadel.git", from: "1.0.0"),
-    ],
+    dependencies: [],
     targets: [
         .executableTarget(
             name: "GhosttlyTermLinkkY",
