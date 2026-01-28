@@ -17,6 +17,7 @@ import { authMiddleware, generateToken, verifyToken } from './middleware/auth.js
 import { TerminalManager } from './handlers/terminal.js';
 import { logger } from './utils/logger.js';
 import { getDashboardHTML } from './web-ui.js';
+import { startDiscovery, stopDiscovery, getDiscoveryInfo } from './discovery.js';
 
 const terminalManager = new TerminalManager();
 
@@ -98,6 +99,11 @@ app.get('/status', authMiddleware, (req, res) => {
     claudeAvailable: config.claudeEnabled,
     tailscaleIP: config.tailscaleIP
   });
+});
+
+// Discovery info endpoint (no auth - needed for initial connection)
+app.get('/discover', (req, res) => {
+  res.json(getDiscoveryInfo(config.port, config.tailscaleIP));
 });
 
 // Create servers
@@ -222,17 +228,28 @@ server.listen(PORT, HOST, () => {
   logger.info('═'.repeat(55));
   logger.info('🔒 Connections verified via Tailscale');
   logger.info('═'.repeat(55));
+  
+  // Start Bonjour/mDNS discovery
+  startDiscovery(PORT, {
+    version: '1.0.0',
+    hostname: config.hostname,
+    tailscaleIP: config.tailscaleIP,
+    claudeEnabled: config.claudeEnabled,
+    shell: config.shell
+  });
 });
 
 // Graceful shutdown
 process.on('SIGINT', () => {
   logger.info('Shutting down...');
+  stopDiscovery();
   terminalManager.destroyAll();
   server.close(() => process.exit(0));
 });
 
 process.on('SIGTERM', () => {
   logger.info('Terminating...');
+  stopDiscovery();
   terminalManager.destroyAll();
   server.close(() => process.exit(0));
 });
