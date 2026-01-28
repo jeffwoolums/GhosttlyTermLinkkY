@@ -14,15 +14,24 @@
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
-        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
     </dict>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
-    <true/>
+    <dict>
+        <!-- Only keep alive if Tailscale is running -->
+        <key>PathState</key>
+        <dict>
+            <key>/var/run/tailscaled.sock</key>
+            <true/>
+        </dict>
+    </dict>
     <key>StandardOutPath</key>
     <string>/tmp/ghosttly-server.log</string>
     <key>StandardErrorPath</key>
     <string>/tmp/ghosttly-server.err</string>
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
 </dict>
 </plist>

@@ -1,13 +1,12 @@
 /**
  * GhosttlyTermLinkkY Server
  * 
- * WebSocket terminal server for iOS-to-Mac remote development via Tailscale
+ * WebSocket terminal server for iOS-to-Mac remote development
  * 
- * Features:
- * - Secure WebSocket connections
- * - PTY-based shell access
- * - Token authentication
- * - Claude Code integration ready
+ * TRANSPORT: Tailscale VPN (required)
+ * - Binds only to Tailscale interface
+ * - No public internet exposure
+ * - Encrypted tunnel between devices
  */
 
 import { WebSocketServer } from 'ws';
@@ -21,182 +20,189 @@ import { logger } from './utils/logger.js';
 const app = express();
 app.use(express.json());
 
-// Health check endpoint
+// Health check
 app.get('/health', (req, res) => {
+  const tsStatus = config.getTailscaleStatus();
   res.json({ 
     status: 'ok', 
     version: '1.0.0',
     hostname: config.hostname,
+    tailscale: {
+      ip: config.tailscaleIP,
+      connected: tsStatus !== null
+    },
     uptime: process.uptime()
   });
 });
 
-// Auth endpoint - get a session token
+// Auth endpoint
 app.post('/auth', async (req, res) => {
   const { token } = req.body;
+  const clientIP = req.ip || req.socket.remoteAddress;
+  
+  logger.info(`Auth attempt from ${clientIP}`);
+  
+  // Verify Tailscale network (100.x.x.x)
+  if (!clientIP.includes('100.') && !clientIP.includes('::ffff:100.')) {
+    logger.warn(`Auth rejected - not from Tailscale: ${clientIP}`);
+    return res.status(403).json({ error: 'Must connect via Tailscale' });
+  }
   
   if (!token || token !== config.authToken) {
-    logger.warn('Auth failed - invalid token');
+    logger.warn(`Auth failed - invalid token from ${clientIP}`);
     return res.status(401).json({ error: 'Invalid token' });
   }
   
-  const sessionToken = generateToken();
-  logger.info('Auth successful - session created');
+  const sessionToken = generateToken({ clientIP });
+  logger.info(`Auth successful for ${clientIP}`);
   res.json({ sessionToken, expiresIn: '24h' });
 });
 
-// Status endpoint (authenticated)
+// Status endpoint (auth required)
 app.get('/status', authMiddleware, (req, res) => {
   res.json({
     hostname: config.hostname,
     shell: config.shell,
     activeSessions: terminalManager.getSessionCount(),
-    claudeAvailable: config.claudeEnabled
+    maxSessions: config.maxSessions,
+    claudeAvailable: config.claudeEnabled,
+    tailscaleIP: config.tailscaleIP
   });
 });
 
-// Create HTTP server
+// Create servers
 const server = http.createServer(app);
-
-// Create WebSocket server
-const wss = new WebSocketServer({ 
-  server,
-  path: '/terminal'
-});
-
-// Terminal session manager
+const wss = new WebSocketServer({ server, path: '/terminal' });
 const terminalManager = new TerminalManager();
 
-// WebSocket connection handler
+// WebSocket handler
 wss.on('connection', async (ws, req) => {
   const clientIP = req.socket.remoteAddress;
-  logger.info(`New WebSocket connection from ${clientIP}`);
   
-  // Expect auth message first
+  // Verify Tailscale
+  if (!clientIP.includes('100.') && !clientIP.includes('::ffff:100.')) {
+    logger.warn(`WS rejected - not Tailscale: ${clientIP}`);
+    ws.close(4003, 'Must connect via Tailscale');
+    return;
+  }
+  
+  logger.info(`New connection from ${clientIP}`);
+  
   let authenticated = false;
   let sessionId = null;
   
+  const authTimeout = setTimeout(() => {
+    if (!authenticated) {
+      ws.close(4001, 'Auth timeout');
+    }
+  }, 10000);
+  
   ws.on('message', async (data) => {
     try {
-      const message = JSON.parse(data.toString());
+      const msg = JSON.parse(data.toString());
       
-      // Handle authentication
-      if (message.type === 'auth') {
-        const verified = verifyToken(message.token);
+      if (msg.type === 'auth') {
+        const verified = verifyToken(msg.token);
         if (verified) {
+          clearTimeout(authTimeout);
           authenticated = true;
+          
           sessionId = terminalManager.createSession(ws, {
             clientIP,
-            shell: message.shell || config.shell,
-            cwd: message.cwd || config.defaultCwd,
-            env: message.env || {}
+            shell: msg.shell || config.shell,
+            cwd: msg.cwd || config.defaultCwd,
+            cols: msg.cols || 80,
+            rows: msg.rows || 24,
+            env: msg.env || {}
           });
           
           ws.send(JSON.stringify({
             type: 'auth_success',
             sessionId,
-            message: 'Connected to GhosttlyTermLinkkY'
+            hostname: config.hostname,
+            tailscaleIP: config.tailscaleIP,
+            message: `Connected to ${config.hostname} via Tailscale`
           }));
           
-          logger.info(`Session ${sessionId} authenticated`);
+          logger.info(`Session ${sessionId} started`);
         } else {
-          ws.send(JSON.stringify({
-            type: 'auth_failed',
-            message: 'Invalid or expired token'
-          }));
-          ws.close();
+          ws.send(JSON.stringify({ type: 'auth_failed', message: 'Invalid token' }));
+          ws.close(4001, 'Auth failed');
         }
         return;
       }
       
-      // Require authentication for all other messages
       if (!authenticated) {
-        ws.send(JSON.stringify({
-          type: 'error',
-          message: 'Not authenticated'
-        }));
+        ws.send(JSON.stringify({ type: 'error', message: 'Not authenticated' }));
         return;
       }
       
-      // Handle terminal input
-      if (message.type === 'input') {
-        terminalManager.write(sessionId, message.data);
+      if (msg.type === 'input') {
+        terminalManager.write(sessionId, msg.data);
+      } else if (msg.type === 'resize') {
+        terminalManager.resize(sessionId, msg.cols, msg.rows);
+      } else if (msg.type === 'command') {
+        handleCommand(sessionId, msg.command, ws);
       }
       
-      // Handle resize
-      if (message.type === 'resize') {
-        terminalManager.resize(sessionId, message.cols, message.rows);
-      }
-      
-      // Handle special commands
-      if (message.type === 'command') {
-        handleCommand(sessionId, message.command, ws);
-      }
-      
-    } catch (error) {
-      logger.error(`Message parse error: ${error.message}`);
-      ws.send(JSON.stringify({
-        type: 'error',
-        message: 'Invalid message format'
-      }));
+    } catch (err) {
+      ws.send(JSON.stringify({ type: 'error', message: 'Invalid message' }));
     }
   });
   
   ws.on('close', () => {
+    clearTimeout(authTimeout);
     if (sessionId) {
       terminalManager.destroySession(sessionId);
       logger.info(`Session ${sessionId} closed`);
     }
   });
   
-  ws.on('error', (error) => {
-    logger.error(`WebSocket error: ${error.message}`);
-  });
+  ws.on('error', (err) => logger.error(`WS error: ${err.message}`));
 });
 
-// Handle special commands (claude, etc.)
+// Special commands
 function handleCommand(sessionId, command, ws) {
   switch (command) {
     case 'claude':
-      // Launch Claude Code in the terminal
       terminalManager.write(sessionId, 'claude\n');
       break;
     case 'interrupt':
-      // Send Ctrl+C
       terminalManager.write(sessionId, '\x03');
       break;
     case 'clear':
-      // Clear screen
       terminalManager.write(sessionId, '\x1b[2J\x1b[H');
       break;
     default:
-      ws.send(JSON.stringify({
-        type: 'error',
-        message: `Unknown command: ${command}`
-      }));
+      ws.send(JSON.stringify({ type: 'error', message: `Unknown: ${command}` }));
   }
 }
 
-// Start server
+// Start server - TAILSCALE ONLY
 const PORT = config.port;
-const HOST = config.host;
+const HOST = config.host;  // This is the Tailscale IP
 
 server.listen(PORT, HOST, () => {
-  logger.info('═'.repeat(50));
-  logger.info('👻 GhosttlyTermLinkkY Server Started');
-  logger.info('═'.repeat(50));
-  logger.info(`HTTP/WS: http://${HOST}:${PORT}`);
-  logger.info(`Terminal WS: ws://${HOST}:${PORT}/terminal`);
-  logger.info(`Tailscale: ${config.tailscaleIP}:${PORT}`);
-  logger.info('═'.repeat(50));
+  logger.info('═'.repeat(55));
+  logger.info('👻 GhosttlyTermLinkkY Server');
+  logger.info('═'.repeat(55));
+  logger.info(`Tailscale IP:  ${HOST}`);
+  logger.info(`HTTP:          http://${HOST}:${PORT}`);
+  logger.info(`WebSocket:     ws://${HOST}:${PORT}/terminal`);
+  logger.info('═'.repeat(55));
+  logger.info('🔒 Listening ONLY on Tailscale - no public exposure');
+  logger.info('═'.repeat(55));
 });
 
 // Graceful shutdown
 process.on('SIGINT', () => {
   logger.info('Shutting down...');
   terminalManager.destroyAll();
-  server.close(() => {
-    logger.info('Server closed');
-    process.exit(0);
-  });
+  server.close(() => process.exit(0));
+});
+
+process.on('SIGTERM', () => {
+  logger.info('Terminating...');
+  terminalManager.destroyAll();
+  server.close(() => process.exit(0));
 });
