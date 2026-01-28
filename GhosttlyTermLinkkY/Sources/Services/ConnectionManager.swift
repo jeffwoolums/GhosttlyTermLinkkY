@@ -55,7 +55,12 @@ class ConnectionManager: ObservableObject {
 
     private func loadHosts() {
         guard let data = UserDefaults.standard.data(forKey: hostsKey),
-              let decoded = try? JSONDecoder().decode([SSHHost].self, from: data) else { return }
+              let decoded = try? JSONDecoder().decode([SSHHost].self, from: data) else {
+            // First launch — seed with presets
+            hosts = SSHHost.presets
+            saveHosts()
+            return
+        }
         hosts = decoded
     }
 

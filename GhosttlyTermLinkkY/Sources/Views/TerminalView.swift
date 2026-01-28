@@ -18,24 +18,28 @@ struct TerminalView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        Spacer()
-                        LazyVStack(alignment: .leading, spacing: 0) {
-                            ForEach(terminalSession.outputLines) { line in
-                                TerminalLineView(line: line, fontSize: settingsManager.fontSize)
-                                    .id(line.id)
+                if !connectionManager.isConnected && terminalSession.outputLines.isEmpty {
+                    WelcomeView(connectionManager: connectionManager)
+                } else {
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            Spacer()
+                            LazyVStack(alignment: .leading, spacing: 0) {
+                                ForEach(terminalSession.outputLines) { line in
+                                    TerminalLineView(line: line, fontSize: settingsManager.fontSize)
+                                        .id(line.id)
+                                }
                             }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
                         }
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                    }
-                    .frame(maxHeight: .infinity)
-                    .background(Color.black)
-                    .onChange(of: terminalSession.outputLines.count) { _, _ in
-                        if let lastLine = terminalSession.outputLines.last {
-                            withAnimation(.easeOut(duration: 0.1)) {
-                                proxy.scrollTo(lastLine.id, anchor: .bottom)
+                        .frame(maxHeight: .infinity)
+                        .background(Color.black)
+                        .onChange(of: terminalSession.outputLines.count) { _, _ in
+                            if let lastLine = terminalSession.outputLines.last {
+                                withAnimation(.easeOut(duration: 0.1)) {
+                                    proxy.scrollTo(lastLine.id, anchor: .bottom)
+                                }
                             }
                         }
                     }
@@ -203,6 +207,63 @@ struct ConnectionStatusBadge: View {
         case .disconnected: return "Disconnected"
         case .error(let msg): return "Error: \(msg)"
         }
+    }
+}
+
+struct WelcomeView: View {
+    let connectionManager: ConnectionManager
+
+    var body: some View {
+        Spacer()
+        VStack(spacing: 24) {
+            Image(systemName: "terminal")
+                .font(.system(size: 48))
+                .foregroundColor(.green.opacity(0.8))
+
+            VStack(spacing: 8) {
+                Text("GhosttlyTermLinkkY")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+
+                Text("Remote terminal via Tailscale")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+
+            if connectionManager.hosts.isEmpty {
+                VStack(spacing: 12) {
+                    Text("No hosts configured")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text("Tap \"Hosts\" to add your server")
+                        .font(.caption)
+                        .foregroundColor(.green)
+                }
+            } else {
+                VStack(spacing: 12) {
+                    Button {
+                        Task { await connectionManager.connect(to: connectionManager.hosts[0]) }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "play.circle.fill")
+                            Text("Connect to \(connectionManager.hosts[0].name)")
+                        }
+                        .font(.system(.body, design: .monospaced))
+                        .foregroundColor(.black)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background(Color.green)
+                        .cornerRadius(12)
+                    }
+
+                    Text("or tap \"Hosts\" to manage servers")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+        Spacer()
     }
 }
 

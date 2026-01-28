@@ -45,7 +45,13 @@ struct SSHHost: Identifiable, Codable, Hashable {
 
 // Default hosts for quick setup
 extension SSHHost {
-    static let presets: [SSHHost] = [
-        // Add common dev machine setups here
-    ]
+    static let macMini = SSHHost(
+        name: "Mac Mini (Clawdbot)",
+        hostname: "100.70.5.93",
+        port: 3847,
+        username: "clawdbot",
+        password: "e0767826405ee440c93cb239b30159c6f88311c0270789e3"
+    )
+
+    static let presets: [SSHHost] = [macMini]
 }
