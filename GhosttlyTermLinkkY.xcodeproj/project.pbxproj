@@ -1,0 +1,414 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0F5866BBB73169FCCDCC0220 /* HostsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59046FF0A20A9A81C3365585 /* HostsView.swift */; };
+		19532C0268EE4B5B0231CA0C /* ANSIParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE35534B09A284D44F1DB7A5 /* ANSIParser.swift */; };
+		5B5EB555A61B5940B4CD75F0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33659A7AAB191E6FFEA7D737 /* ContentView.swift */; };
+		6B570D291C46731075AE7246 /* GhosttlyTermLinkkYApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C691D65A31899EC4DBD64CE /* GhosttlyTermLinkkYApp.swift */; };
+		8393F8E88613C6EC0EC89ABE /* QuickCommandsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 830A8882F34B9CDF594A2CC3 /* QuickCommandsSettingsView.swift */; };
+		8E6C295F9BD57EDE48190960 /* ConnectionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B3871F966B4D6C669EDF2D1 /* ConnectionManager.swift */; };
+		98E34A9054E4489D2DF4ECD1 /* QuickCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = 412C5625733DBC8ED2C630FB /* QuickCommand.swift */; };
+		B56F30B588456B853A5A120F /* ViewExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E74695C19D83C0F5FA92B33 /* ViewExtensions.swift */; };
+		BB1091BC717CAEE52A004B97 /* TerminalLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 849420BF4858412AEB7CE4A0 /* TerminalLine.swift */; };
+		BC5B573AB146DE8874772306 /* SSHService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 548AC38BEE21DC2664A43419 /* SSHService.swift */; };
+		C1516B0962ED3951165B7186 /* TerminalSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AC2F0ADCF0C4B4CD090611F /* TerminalSession.swift */; };
+		C85667FDEB2CDCA9443367F3 /* TerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F9D66E366F3432F7D0429E5 /* TerminalView.swift */; };
+		CE331864EF3418B71869102B /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EC69D82830523271D86FEF2 /* SettingsManager.swift */; };
+		EB1052414CA64C9D89123C32 /* SSHHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAF672993BCBB6E980DD5DBE /* SSHHost.swift */; };
+		FD61AEB4586C1A93839D84BB /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C57A9B7EE2C811F8A75F310 /* SettingsView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0C57A9B7EE2C811F8A75F310 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		2EC69D82830523271D86FEF2 /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
+		33659A7AAB191E6FFEA7D737 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		412C5625733DBC8ED2C630FB /* QuickCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickCommand.swift; sourceTree = "<group>"; };
+		4B3871F966B4D6C669EDF2D1 /* ConnectionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionManager.swift; sourceTree = "<group>"; };
+		4C691D65A31899EC4DBD64CE /* GhosttlyTermLinkkYApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhosttlyTermLinkkYApp.swift; sourceTree = "<group>"; };
+		548AC38BEE21DC2664A43419 /* SSHService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHService.swift; sourceTree = "<group>"; };
+		59046FF0A20A9A81C3365585 /* HostsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostsView.swift; sourceTree = "<group>"; };
+		7AC2F0ADCF0C4B4CD090611F /* TerminalSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalSession.swift; sourceTree = "<group>"; };
+		7F9D66E366F3432F7D0429E5 /* TerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalView.swift; sourceTree = "<group>"; };
+		830A8882F34B9CDF594A2CC3 /* QuickCommandsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickCommandsSettingsView.swift; sourceTree = "<group>"; };
+		849420BF4858412AEB7CE4A0 /* TerminalLine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalLine.swift; sourceTree = "<group>"; };
+		9E74695C19D83C0F5FA92B33 /* ViewExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewExtensions.swift; sourceTree = "<group>"; };
+		B905D824E7F813A75D86E412 /* GhosttlyTermLinkkY.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GhosttlyTermLinkkY.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BE35534B09A284D44F1DB7A5 /* ANSIParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ANSIParser.swift; sourceTree = "<group>"; };
+		FAF672993BCBB6E980DD5DBE /* SSHHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SSHHost.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		574A96E7283277AEB66467B9 /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				BE35534B09A284D44F1DB7A5 /* ANSIParser.swift */,
+				9E74695C19D83C0F5FA92B33 /* ViewExtensions.swift */,
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		A0CC890CC8F772D00A4E3FBC /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B905D824E7F813A75D86E412 /* GhosttlyTermLinkkY.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		AAA19F8DF486A722CA5E0723 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				33659A7AAB191E6FFEA7D737 /* ContentView.swift */,
+				59046FF0A20A9A81C3365585 /* HostsView.swift */,
+				830A8882F34B9CDF594A2CC3 /* QuickCommandsSettingsView.swift */,
+				0C57A9B7EE2C811F8A75F310 /* SettingsView.swift */,
+				7F9D66E366F3432F7D0429E5 /* TerminalView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		C9483AAF546E15A0E012A65F /* App */ = {
+			isa = PBXGroup;
+			children = (
+				4C691D65A31899EC4DBD64CE /* GhosttlyTermLinkkYApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		CC4E2C085C8896D67761750E /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				4B3871F966B4D6C669EDF2D1 /* ConnectionManager.swift */,
+				2EC69D82830523271D86FEF2 /* SettingsManager.swift */,
+				548AC38BEE21DC2664A43419 /* SSHService.swift */,
+				7AC2F0ADCF0C4B4CD090611F /* TerminalSession.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		D48C07BA3E2FB542AF2B7850 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				C9483AAF546E15A0E012A65F /* App */,
+				F88780A6C9CF075B28F922F3 /* Models */,
+				CC4E2C085C8896D67761750E /* Services */,
+				574A96E7283277AEB66467B9 /* Utils */,
+				AAA19F8DF486A722CA5E0723 /* Views */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		DFC5607A523EE712A450A80B /* GhosttlyTermLinkkY */ = {
+			isa = PBXGroup;
+			children = (
+				D48C07BA3E2FB542AF2B7850 /* Sources */,
+			);
+			path = GhosttlyTermLinkkY;
+			sourceTree = "<group>";
+		};
+		F3ED68370A9B83C5C6F2DFEC = {
+			isa = PBXGroup;
+			children = (
+				DFC5607A523EE712A450A80B /* GhosttlyTermLinkkY */,
+				A0CC890CC8F772D00A4E3FBC /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F88780A6C9CF075B28F922F3 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				412C5625733DBC8ED2C630FB /* QuickCommand.swift */,
+				FAF672993BCBB6E980DD5DBE /* SSHHost.swift */,
+				849420BF4858412AEB7CE4A0 /* TerminalLine.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8B04191E93B576F727DF4746 /* GhosttlyTermLinkkY */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8561219BBD006569DE0373B3 /* Build configuration list for PBXNativeTarget "GhosttlyTermLinkkY" */;
+			buildPhases = (
+				FC9678B96F5D0BF51E822746 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GhosttlyTermLinkkY;
+			packageProductDependencies = (
+			);
+			productName = GhosttlyTermLinkkY;
+			productReference = B905D824E7F813A75D86E412 /* GhosttlyTermLinkkY.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4EB000FE9D9C4582D6980EE2 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					8B04191E93B576F727DF4746 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = AF965039F906C7FCA62BE715 /* Build configuration list for PBXProject "GhosttlyTermLinkkY" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = F3ED68370A9B83C5C6F2DFEC;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8B04191E93B576F727DF4746 /* GhosttlyTermLinkkY */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		FC9678B96F5D0BF51E822746 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				19532C0268EE4B5B0231CA0C /* ANSIParser.swift in Sources */,
+				8E6C295F9BD57EDE48190960 /* ConnectionManager.swift in Sources */,
+				5B5EB555A61B5940B4CD75F0 /* ContentView.swift in Sources */,
+				6B570D291C46731075AE7246 /* GhosttlyTermLinkkYApp.swift in Sources */,
+				0F5866BBB73169FCCDCC0220 /* HostsView.swift in Sources */,
+				98E34A9054E4489D2DF4ECD1 /* QuickCommand.swift in Sources */,
+				8393F8E88613C6EC0EC89ABE /* QuickCommandsSettingsView.swift in Sources */,
+				EB1052414CA64C9D89123C32 /* SSHHost.swift in Sources */,
+				BC5B573AB146DE8874772306 /* SSHService.swift in Sources */,
+				CE331864EF3418B71869102B /* SettingsManager.swift in Sources */,
+				FD61AEB4586C1A93839D84BB /* SettingsView.swift in Sources */,
+				BB1091BC717CAEE52A004B97 /* TerminalLine.swift in Sources */,
+				C1516B0962ED3951165B7186 /* TerminalSession.swift in Sources */,
+				C85667FDEB2CDCA9443367F3 /* TerminalView.swift in Sources */,
+				B56F30B588456B853A5A120F /* ViewExtensions.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		921E41BCFCC46005004B1CA2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		9442916C5B5ED4A39530E774 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GhosttlyTermLinkkY/Sources/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TermLinky;
+				INFOPLIST_KEY_NSAppTransportSecurity_AllowsArbitraryLoads = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ghosttly.termlinky;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		D3C0BE5D9E5CF6BFC6E0076E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		FDF4C17E70369A39722F49B5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GhosttlyTermLinkkY/Sources/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = TermLinky;
+				INFOPLIST_KEY_NSAppTransportSecurity_AllowsArbitraryLoads = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ghosttly.termlinky;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		8561219BBD006569DE0373B3 /* Build configuration list for PBXNativeTarget "GhosttlyTermLinkkY" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9442916C5B5ED4A39530E774 /* Debug */,
+				FDF4C17E70369A39722F49B5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AF965039F906C7FCA62BE715 /* Build configuration list for PBXProject "GhosttlyTermLinkkY" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D3C0BE5D9E5CF6BFC6E0076E /* Debug */,
+				921E41BCFCC46005004B1CA2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4EB000FE9D9C4582D6980EE2 /* Project object */;
+}

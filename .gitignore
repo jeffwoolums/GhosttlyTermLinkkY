@@ -22,3 +22,6 @@ Thumbs.db
 
 # SPM generated
 .swiftpm/
+build/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/

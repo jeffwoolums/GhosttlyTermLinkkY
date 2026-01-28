@@ -123,7 +123,7 @@ struct HostRow: View {
             } else {
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(.tertiary)
+                    .foregroundStyle(.tertiary)
             }
         }
         .padding(.vertical, 4)

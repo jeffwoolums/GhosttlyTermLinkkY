@@ -56,7 +56,7 @@ struct SettingsView: View {
                                     .foregroundColor(.secondary)
                                 Image(systemName: "chevron.right")
                                     .font(.caption)
-                                    .foregroundColor(.tertiary)
+                                    .foregroundStyle(.tertiary)
                             }
                         }
                     }
