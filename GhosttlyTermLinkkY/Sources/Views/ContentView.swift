@@ -23,14 +23,14 @@ struct ContentView: View {
                     Text("Terminal")
                 }
                 .tag(Tab.terminal)
-            
+
             HostsView()
                 .tabItem {
                     Image(systemName: "server.rack")
                     Text("Hosts")
                 }
                 .tag(Tab.hosts)
-            
+
             SettingsView()
                 .tabItem {
                     Image(systemName: "gear")
@@ -39,6 +39,7 @@ struct ContentView: View {
                 .tag(Tab.settings)
         }
         .tint(.green)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

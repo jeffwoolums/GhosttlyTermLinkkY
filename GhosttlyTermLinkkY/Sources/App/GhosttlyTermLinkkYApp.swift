@@ -19,6 +19,7 @@ struct GhosttlyTermLinkkYApp: App {
                 .environmentObject(connectionManager)
                 .environmentObject(settingsManager)
                 .preferredColorScheme(.dark)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 }
