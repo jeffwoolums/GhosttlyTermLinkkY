@@ -2,7 +2,7 @@
 //  TerminalView.swift
 //  GhosttlyTermLinkkY
 //
-//  Main terminal interface with ANSI color rendering.
+//  Full-screen terminal - NO NavigationStack, edge-to-edge black.
 //
 
 import SwiftUI
@@ -13,137 +13,227 @@ struct TerminalView: View {
     @StateObject private var terminalSession = TerminalSession()
     @State private var inputText: String = ""
     @State private var showingQuickCommands = false
+    @State private var showingMenu = false
     @FocusState private var isInputFocused: Bool
 
     var body: some View {
-        GeometryReader { geometry in
-            NavigationStack {
-                VStack(spacing: 0) {
-                    // Terminal output area - takes all available height minus input bar
-                    if !connectionManager.isConnected && terminalSession.outputLines.isEmpty {
-                        WelcomeView(connectionManager: connectionManager)
-                            .frame(width: geometry.size.width, height: geometry.size.height - 120)
-                    } else {
-                        ScrollViewReader { proxy in
-                            ScrollView {
-                                LazyVStack(alignment: .leading, spacing: 0) {
-                                    ForEach(terminalSession.outputLines) { line in
-                                        TerminalLineView(line: line, fontSize: settingsManager.fontSize)
-                                            .id(line.id)
-                                    }
-                                }
-                                .frame(minHeight: geometry.size.height - 120, alignment: .bottom)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                            }
-                            .frame(width: geometry.size.width, height: geometry.size.height - 120)
-                            .background(Color.black)
-                            .onChange(of: terminalSession.outputLines.count) { _, _ in
-                                if let lastLine = terminalSession.outputLines.last {
-                                    withAnimation(.easeOut(duration: 0.1)) {
-                                        proxy.scrollTo(lastLine.id, anchor: .bottom)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Divider().background(Color.green.opacity(0.5))
-
-                    // Input bar - fixed height at bottom
+        ZStack {
+            // Full-bleed black
+            Color.black.ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Header
+                headerBar
+                    .padding(.top, 8)
+                
+                // Terminal content
+                if !connectionManager.isConnected && terminalSession.outputLines.count <= 2 {
+                    welcomeContent
+                } else {
+                    terminalContent
+                }
+                
+                // Input bar
+                inputBar
+            }
+        }
+        .confirmationDialog("Terminal", isPresented: $showingMenu) {
+            Button("Clear Screen") { terminalSession.clear() }
+            Button("List Sessions") { terminalSession.listSessions() }
+            Button("Reconnect") {
+                Task { await connectionManager.reconnect() }
+            }
+            Button("Send Ctrl+C", role: .destructive) {
+                terminalSession.sendControlC()
+            }
+            Button("Cancel", role: .cancel) { }
+        }
+        .sheet(isPresented: $showingQuickCommands) {
+            QuickCommandsSheet { command in
+                inputText = command
+                showingQuickCommands = false
+                sendCommand()
+            }
+        }
+        .onAppear {
+            terminalSession.connectionManager = connectionManager
+            if connectionManager.isConnected {
+                terminalSession.startSession()
+            }
+        }
+        .onChange(of: connectionManager.connectionState) { _, newState in
+            if case .connected = newState {
+                terminalSession.startSession()
+            }
+        }
+    }
+    
+    // MARK: - Header
+    
+    private var headerBar: some View {
+        HStack {
+            // Status
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(statusColor)
+                    .frame(width: 8, height: 8)
+                Text(statusText)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            
+            Spacer()
+            
+            Text("Terminal")
+                .font(.headline)
+                .foregroundColor(.white)
+            
+            Spacer()
+            
+            Button {
+                showingMenu = true
+            } label: {
+                Image(systemName: "ellipsis.circle")
+                    .font(.title3)
+                    .foregroundColor(.green)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+    }
+    
+    // MARK: - Welcome
+    
+    private var welcomeContent: some View {
+        VStack(spacing: 24) {
+            Spacer()
+            
+            Image(systemName: "terminal")
+                .font(.system(size: 64))
+                .foregroundColor(.green)
+            
+            Text("GhosttlyTermLinkkY")
+                .font(.title)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+            
+            Text("Remote terminal for Claude Code")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            Spacer()
+            
+            if connectionManager.hosts.isEmpty {
+                Text("Go to Hosts tab to add a server")
+                    .font(.callout)
+                    .foregroundColor(.green)
+            } else {
+                Button {
+                    Task { await connectionManager.connect(to: connectionManager.hosts[0]) }
+                } label: {
                     HStack(spacing: 8) {
-                        Button {
-                            showingQuickCommands = true
-                        } label: {
-                            Image(systemName: "bolt.fill")
-                                .foregroundColor(.green)
-                                .frame(width: 32, height: 32)
-                        }
-
-                        commandInputField
-
-                        Button {
-                            sendCommand()
-                        } label: {
-                            Image(systemName: "arrow.up.circle.fill")
-                                .font(.title2)
-                                .foregroundColor(inputText.isEmpty ? .gray : .green)
-                        }
-                        .disabled(inputText.isEmpty)
+                        Image(systemName: "play.fill")
+                        Text("Connect to \(connectionManager.hosts[0].name)")
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .frame(height: 60)
-                    .background(Color.black.opacity(0.95))
+                    .font(.headline)
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 14)
+                    .background(Color.green)
+                    .cornerRadius(12)
                 }
-                .background(Color.black)
-                .navigationTitle("Terminal")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        ConnectionStatusBadge()
-                    }
-
-                    ToolbarItem(placement: .primaryAction) {
-                        Menu {
-                            Button("Clear Screen") { terminalSession.clear() }
-                            Button("List Sessions") { terminalSession.listSessions() }
-                            Button("Reconnect") {
-                                Task { await connectionManager.reconnect() }
-                            }
-                            Divider()
-                            Button("Send Ctrl+C", role: .destructive) {
-                                terminalSession.sendControlC()
-                            }
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
-                        }
+            }
+            
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    // MARK: - Terminal Output
+    
+    private var terminalContent: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 1) {
+                    ForEach(terminalSession.outputLines) { line in
+                        TerminalLineView(line: line, fontSize: settingsManager.fontSize)
+                            .id(line.id)
                     }
                 }
-                .sheet(isPresented: $showingQuickCommands) {
-                    QuickCommandsSheet(onSelect: { command in
-                        inputText = command
-                        showingQuickCommands = false
-                        sendCommand()
-                    })
-                }
-                .onAppear {
-                    terminalSession.connectionManager = connectionManager
-                    if connectionManager.isConnected {
-                        terminalSession.startSession()
-                    }
-                }
-                .onChange(of: connectionManager.connectionState) { _, newState in
-                    if case .connected = newState {
-                        terminalSession.startSession()
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+            }
+            .onChange(of: terminalSession.outputLines.count) { _, _ in
+                if let last = terminalSession.outputLines.last {
+                    withAnimation(.easeOut(duration: 0.1)) {
+                        proxy.scrollTo(last.id, anchor: .bottom)
                     }
                 }
             }
         }
-        .ignoresSafeArea(.keyboard)
     }
-
-    @ViewBuilder
-    private var commandInputField: some View {
-        #if os(iOS)
-        TextField("Enter command...", text: $inputText)
-            .textFieldStyle(.plain)
-            .font(.system(.body, design: .monospaced))
-            .foregroundColor(.green)
-            .autocorrectionDisabled()
-            .textInputAutocapitalization(.never)
-            .focused($isInputFocused)
-            .onSubmit { sendCommand() }
-        #else
-        TextField("Enter command...", text: $inputText)
-            .textFieldStyle(.plain)
-            .font(.system(.body, design: .monospaced))
-            .foregroundColor(.green)
-            .focused($isInputFocused)
-            .onSubmit { sendCommand() }
-        #endif
+    
+    // MARK: - Input Bar
+    
+    private var inputBar: some View {
+        HStack(spacing: 10) {
+            Button {
+                showingQuickCommands = true
+            } label: {
+                Image(systemName: "bolt.fill")
+                    .font(.title3)
+                    .foregroundColor(.green)
+                    .frame(width: 36, height: 36)
+            }
+            
+            TextField("Enter command...", text: $inputText)
+                .textFieldStyle(.plain)
+                .font(.system(.body, design: .monospaced))
+                .foregroundColor(.green)
+                .autocorrectionDisabled()
+                #if os(iOS)
+                .textInputAutocapitalization(.never)
+                #endif
+                .focused($isInputFocused)
+                .onSubmit { sendCommand() }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(Color.white.opacity(0.08))
+                .cornerRadius(8)
+            
+            Button {
+                sendCommand()
+            } label: {
+                Image(systemName: "arrow.up.circle.fill")
+                    .font(.title2)
+                    .foregroundColor(inputText.isEmpty ? .gray : .green)
+            }
+            .disabled(inputText.isEmpty)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .padding(.bottom, 4)
     }
-
+    
+    // MARK: - Helpers
+    
+    private var statusColor: Color {
+        switch connectionManager.connectionState {
+        case .connected: return .green
+        case .connecting: return .yellow
+        case .disconnected, .error: return .red
+        }
+    }
+    
+    private var statusText: String {
+        switch connectionManager.connectionState {
+        case .connected: return connectionManager.currentHost?.name ?? "Connected"
+        case .connecting: return "Connecting..."
+        case .disconnected: return "Disconnected"
+        case .error(let msg): return msg
+        }
+    }
+    
     private func sendCommand() {
         guard !inputText.isEmpty else { return }
         terminalSession.send(command: inputText)
@@ -151,9 +241,8 @@ struct TerminalView: View {
     }
 }
 
-/// Renders a single terminal line with full ANSI color support.
-/// Output lines are parsed through ANSIParser for multi-color spans.
-/// Input/system/error lines use their fixed type colors.
+// MARK: - Terminal Line
+
 struct TerminalLineView: View {
     let line: TerminalLine
     let fontSize: Double
@@ -162,13 +251,12 @@ struct TerminalLineView: View {
         Text(renderedText)
             .font(.system(size: CGFloat(fontSize), design: .monospaced))
             .textSelection(.enabled)
-            .lineLimit(nil)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var renderedText: AttributedString {
         switch line.type {
         case .output:
-            // Full ANSI parsing for server output
             return ANSIParser.parse(line.text, defaultColor: .white)
         case .input:
             return ANSIParser.parse(line.text, defaultColor: .green)
@@ -184,135 +272,35 @@ struct TerminalLineView: View {
     }
 }
 
-struct ConnectionStatusBadge: View {
-    @EnvironmentObject var connectionManager: ConnectionManager
-
-    var body: some View {
-        HStack(spacing: 4) {
-            Circle()
-                .fill(statusColor)
-                .frame(width: 8, height: 8)
-            Text(statusText)
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-    }
-
-    private var statusColor: Color {
-        switch connectionManager.connectionState {
-        case .connected: return .green
-        case .connecting: return .yellow
-        case .disconnected: return .red
-        case .error: return .red
-        }
-    }
-
-    private var statusText: String {
-        switch connectionManager.connectionState {
-        case .connected: return connectionManager.currentHost?.name ?? "Connected"
-        case .connecting: return "Connecting..."
-        case .disconnected: return "Disconnected"
-        case .error(let msg): return "Error: \(msg)"
-        }
-    }
-}
-
-struct WelcomeView: View {
-    let connectionManager: ConnectionManager
-
-    var body: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
-
-            VStack(spacing: 32) {
-                Spacer()
-
-                VStack(spacing: 16) {
-                    Image(systemName: "terminal")
-                        .font(.system(size: 72))
-                        .foregroundColor(.green)
-
-                    Text("GhosttlyTermLinkkY")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-
-                    Text("Remote terminal monitoring")
-                        .font(.title3)
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-
-                if connectionManager.hosts.isEmpty {
-                    VStack(spacing: 16) {
-                        Text("No servers configured")
-                            .font(.title3)
-                            .foregroundColor(.secondary)
-                        Text("Tap \"Hosts\" tab below to add your server")
-                            .font(.body)
-                            .foregroundColor(.green)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding(.horizontal, 40)
-                } else {
-                    Button {
-                        Task { await connectionManager.connect(to: connectionManager.hosts[0]) }
-                    } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "play.circle.fill")
-                                .font(.title2)
-                            Text("Connect to \(connectionManager.hosts[0].name)")
-                                .font(.title3)
-                                .fontWeight(.semibold)
-                        }
-                        .foregroundColor(.black)
-                        .padding(.horizontal, 32)
-                        .padding(.vertical, 16)
-                        .background(Color.green)
-                        .cornerRadius(16)
-                    }
-                }
-
-                Spacer()
-            }
-            .padding()
-        }
-    }
-}
+// MARK: - Quick Commands
 
 struct QuickCommandsSheet: View {
     let onSelect: (String) -> Void
     @Environment(\.dismiss) var dismiss
-
-    let commands = [
-        ("Claude Code", "claude"),
-        ("List Files", "ls -la"),
-        ("Git Status", "git status"),
-        ("Git Log", "git log --oneline -10"),
-        ("Git Pull", "git pull"),
-        ("NPM Install", "npm install"),
-        ("NPM Run Dev", "npm run dev"),
-        ("Python", "python3"),
-        ("Tmux Sessions", "tmux list-sessions"),
-        ("Clear", "clear"),
-    ]
+    @EnvironmentObject var settingsManager: SettingsManager
 
     var body: some View {
         NavigationStack {
             List {
-                ForEach(commands, id: \.0) { name, command in
+                ForEach(settingsManager.quickCommands) { cmd in
                     Button {
-                        onSelect(command)
+                        onSelect(cmd.command)
                     } label: {
                         HStack {
-                            Text(name).foregroundColor(.primary)
+                            Text(cmd.name)
+                                .foregroundColor(.primary)
                             Spacer()
-                            Text(command)
+                            Text(cmd.command)
                                 .font(.system(.caption, design: .monospaced))
                                 .foregroundColor(.secondary)
+                                .lineLimit(1)
                         }
                     }
+                }
+                
+                if settingsManager.quickCommands.isEmpty {
+                    Text("No quick commands.\nAdd them in Settings.")
+                        .foregroundColor(.secondary)
                 }
             }
             .navigationTitle("Quick Commands")
@@ -323,8 +311,6 @@ struct QuickCommandsSheet: View {
                 }
             }
         }
-        #if os(iOS)
         .presentationDetents([.medium])
-        #endif
     }
 }

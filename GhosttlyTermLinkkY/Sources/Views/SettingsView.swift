@@ -2,94 +2,127 @@
 //  SettingsView.swift
 //  GhosttlyTermLinkkY
 //
+//  Settings - NO NavigationStack wrapper, clean layout.
+//
 
 import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var settingsManager: SettingsManager
     @EnvironmentObject var connectionManager: ConnectionManager
+    @State private var showingQuickCommands = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Custom header
-            HStack {
-                Text("Settings")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                Spacer()
-            }
-            .padding()
-            .background(Color.black)
-
-            List {
-                Section("Terminal") {
-                    HStack {
-                        Text("Font Size")
-                        Spacer()
-                        Stepper("\(Int(settingsManager.fontSize))", value: $settingsManager.fontSize, in: 10...24)
-                            .fixedSize()
-                    }
-
-                    Toggle("Haptic Feedback", isOn: $settingsManager.hapticFeedback)
-
-                    Toggle("Keep Screen On", isOn: $settingsManager.keepScreenOn)
+        ZStack {
+            Color(.systemBackground).ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Text("Settings")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                    Spacer()
                 }
-
-                Section("Connection") {
-                    HStack {
-                        Text("Timeout")
-                        Spacer()
-                        Picker("", selection: $settingsManager.connectionTimeout) {
-                            Text("10s").tag(10)
-                            Text("30s").tag(30)
-                            Text("60s").tag(60)
-                        }
-                        .pickerStyle(.segmented)
-                        .frame(width: 180)
-                    }
-
-                    Toggle("Auto-Reconnect", isOn: $settingsManager.autoReconnect)
-
-                    Toggle("Vibrate on Disconnect", isOn: $settingsManager.vibrateOnDisconnect)
-                }
-
-                Section("About") {
-                    HStack {
-                        Text("Version")
-                        Spacer()
-                        Text("1.0.0")
-                            .foregroundColor(.secondary)
-                    }
-
-                    Link(destination: URL(string: "https://github.com/jeffwoolums/GhosttlyTermLinkkY")!) {
+                .padding(.horizontal)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
+                
+                // Settings list
+                List {
+                    // Terminal
+                    Section("Terminal") {
                         HStack {
-                            Text("GitHub Repository")
+                            Text("Font Size")
                             Spacer()
-                            Image(systemName: "arrow.up.right.square")
+                            Text("\(Int(settingsManager.fontSize)) pt")
                                 .foregroundColor(.secondary)
                         }
+                        
+                        Slider(value: $settingsManager.fontSize, in: 10...24, step: 1)
+                            .tint(.green)
                     }
-
-                    Link(destination: URL(string: "https://tailscale.com")!) {
+                    
+                    // Quick Commands
+                    Section {
+                        Button {
+                            showingQuickCommands = true
+                        } label: {
+                            HStack {
+                                Label("Quick Commands", systemImage: "bolt.fill")
+                                    .foregroundColor(.primary)
+                                Spacer()
+                                Text("\(settingsManager.quickCommands.count)")
+                                    .foregroundColor(.secondary)
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundColor(.tertiary)
+                            }
+                        }
+                    }
+                    
+                    // Connection
+                    Section("Connection") {
                         HStack {
-                            Text("Tailscale")
+                            Text("Status")
                             Spacer()
-                            Image(systemName: "arrow.up.right.square")
+                            HStack(spacing: 6) {
+                                Circle()
+                                    .fill(statusColor)
+                                    .frame(width: 8, height: 8)
+                                Text(statusText)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        
+                        if connectionManager.isConnected {
+                            Button("Disconnect", role: .destructive) {
+                                connectionManager.disconnect()
+                            }
+                        }
+                    }
+                    
+                    // About
+                    Section("About") {
+                        HStack {
+                            Text("Version")
+                            Spacer()
+                            Text("1.1.0")
                                 .foregroundColor(.secondary)
+                        }
+                        
+                        Link(destination: URL(string: "https://github.com/jeffwoolums/GhosttlyTermLinkkY")!) {
+                            HStack {
+                                Text("GitHub")
+                                Spacer()
+                                Image(systemName: "arrow.up.right.square")
+                                    .foregroundColor(.secondary)
+                            }
                         }
                     }
                 }
-
-                Section {
-                    Button(role: .destructive) {
-                        settingsManager.resetToDefaults()
-                    } label: {
-                        Text("Reset to Defaults")
-                    }
-                }
+                .listStyle(.insetGrouped)
             }
-            .listStyle(.plain)
         }
-        .background(Color.black)
+        .sheet(isPresented: $showingQuickCommands) {
+            QuickCommandsSettingsView()
+        }
+    }
+    
+    private var statusColor: Color {
+        switch connectionManager.connectionState {
+        case .connected: return .green
+        case .connecting: return .yellow
+        case .disconnected, .error: return .red
+        }
+    }
+    
+    private var statusText: String {
+        switch connectionManager.connectionState {
+        case .connected: return "Connected"
+        case .connecting: return "Connecting..."
+        case .disconnected: return "Disconnected"
+        case .error: return "Error"
+        }
     }
 }

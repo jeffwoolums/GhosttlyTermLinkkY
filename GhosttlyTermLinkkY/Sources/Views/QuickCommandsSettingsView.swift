@@ -2,20 +2,23 @@
 //  QuickCommandsSettingsView.swift
 //  GhosttlyTermLinkkY
 //
+//  Manage quick commands - presented as sheet.
+//
 
 import SwiftUI
 
 struct QuickCommandsSettingsView: View {
     @EnvironmentObject var settingsManager: SettingsManager
+    @Environment(\.dismiss) var dismiss
     @State private var showingAddCommand = false
     @State private var editingCommand: QuickCommand?
-    
+
     var body: some View {
-        List {
-            Section {
+        NavigationStack {
+            List {
                 ForEach(settingsManager.quickCommands) { command in
                     HStack {
-                        VStack(alignment: .leading) {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text(command.name)
                                 .font(.headline)
                             Text(command.command)
@@ -23,8 +26,9 @@ struct QuickCommandsSettingsView: View {
                                 .foregroundColor(.secondary)
                                 .fontDesign(.monospaced)
                         }
+                        Spacer()
                     }
-                    .swipeActions {
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
                             settingsManager.removeQuickCommand(command)
                         } label: {
@@ -42,30 +46,38 @@ struct QuickCommandsSettingsView: View {
                 .onMove { from, to in
                     settingsManager.moveQuickCommand(from: from, to: to)
                 }
-            }
-            
-            Section {
-                Button {
-                    showingAddCommand = true
-                } label: {
-                    Label("Add Command", systemImage: "plus.circle.fill")
+                
+                Section {
+                    Button {
+                        showingAddCommand = true
+                    } label: {
+                        Label("Add Command", systemImage: "plus.circle.fill")
+                            .foregroundColor(.green)
+                    }
                 }
             }
-        }
-        .navigationTitle("Quick Commands")
-        #if os(iOS)
-        .toolbar {
-            EditButton()
-        }
-        #endif
-        .sheet(isPresented: $showingAddCommand) {
-            AddQuickCommandSheet()
-        }
-        .sheet(item: $editingCommand) { command in
-            EditQuickCommandSheet(command: command)
+            .listStyle(.insetGrouped)
+            .navigationTitle("Quick Commands")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Done") { dismiss() }
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    EditButton()
+                }
+            }
+            .sheet(isPresented: $showingAddCommand) {
+                AddQuickCommandSheet()
+            }
+            .sheet(item: $editingCommand) { command in
+                EditQuickCommandSheet(command: command)
+            }
         }
     }
 }
+
+// MARK: - Add Command
 
 struct AddQuickCommandSheet: View {
     @EnvironmentObject var settingsManager: SettingsManager
@@ -73,15 +85,21 @@ struct AddQuickCommandSheet: View {
     
     @State private var name = ""
     @State private var command = ""
-    
+
     var body: some View {
         NavigationStack {
             Form {
                 TextField("Name", text: $name)
-                commandTextField
+                
+                TextField("Command", text: $command)
+                    .fontDesign(.monospaced)
+                    .autocorrectionDisabled()
+                    #if os(iOS)
+                    .textInputAutocapitalization(.never)
+                    #endif
             }
             .navigationTitle("Add Command")
-            .navigationBarTitleDisplayModeInline()
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -96,20 +114,9 @@ struct AddQuickCommandSheet: View {
             }
         }
     }
-    
-    @ViewBuilder
-    private var commandTextField: some View {
-        #if os(iOS)
-        TextField("Command", text: $command)
-            .fontDesign(.monospaced)
-            .autocorrectionDisabled()
-            .textInputAutocapitalization(.never)
-        #else
-        TextField("Command", text: $command)
-            .fontDesign(.monospaced)
-        #endif
-    }
 }
+
+// MARK: - Edit Command
 
 struct EditQuickCommandSheet: View {
     @EnvironmentObject var settingsManager: SettingsManager
@@ -118,15 +125,21 @@ struct EditQuickCommandSheet: View {
     
     @State private var name = ""
     @State private var commandText = ""
-    
+
     var body: some View {
         NavigationStack {
             Form {
                 TextField("Name", text: $name)
-                commandTextField
+                
+                TextField("Command", text: $commandText)
+                    .fontDesign(.monospaced)
+                    .autocorrectionDisabled()
+                    #if os(iOS)
+                    .textInputAutocapitalization(.never)
+                    #endif
             }
             .navigationTitle("Edit Command")
-            .navigationBarTitleDisplayModeInline()
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -147,18 +160,5 @@ struct EditQuickCommandSheet: View {
                 commandText = command.command
             }
         }
-    }
-    
-    @ViewBuilder
-    private var commandTextField: some View {
-        #if os(iOS)
-        TextField("Command", text: $commandText)
-            .fontDesign(.monospaced)
-            .autocorrectionDisabled()
-            .textInputAutocapitalization(.never)
-        #else
-        TextField("Command", text: $commandText)
-            .fontDesign(.monospaced)
-        #endif
     }
 }
