@@ -20,6 +20,7 @@ struct TerminalView: View {
             VStack(spacing: 0) {
                 if !connectionManager.isConnected && terminalSession.outputLines.isEmpty {
                     WelcomeView(connectionManager: connectionManager)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     ScrollViewReader { proxy in
                         ScrollView {
@@ -71,6 +72,7 @@ struct TerminalView: View {
                 .padding(.vertical, 8)
                 .background(Color.black.opacity(0.95))
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.black)
             .navigationTitle("Terminal")
             .navigationBarTitleDisplayModeInline()
@@ -214,8 +216,9 @@ struct WelcomeView: View {
     let connectionManager: ConnectionManager
 
     var body: some View {
-        Spacer()
-        VStack(spacing: 24) {
+        VStack(spacing: 0) {
+            Spacer()
+            VStack(spacing: 24) {
             Image(systemName: "terminal")
                 .font(.system(size: 48))
                 .foregroundColor(.green.opacity(0.8))
@@ -262,8 +265,9 @@ struct WelcomeView: View {
                         .foregroundColor(.secondary)
                 }
             }
+            Spacer()
         }
-        Spacer()
+        .background(Color.black)
     }
 }
 
