@@ -53,16 +53,7 @@ struct TerminalView: View {
                     }
                     
                     // Command input
-                    TextField("Enter command...", text: $inputText)
-                        .textFieldStyle(.plain)
-                        .font(.system(.body, design: .monospaced))
-                        .foregroundColor(.green)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                        .focused($isInputFocused)
-                        .onSubmit {
-                            sendCommand()
-                        }
+                    commandInputField
                     
                     // Send button
                     Button {
@@ -80,13 +71,13 @@ struct TerminalView: View {
             }
             .background(Color.black)
             .navigationTitle("Terminal")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayModeInline()
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .navigation) {
                     ConnectionStatusBadge()
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .primaryAction) {
                     Menu {
                         Button("Clear Screen") {
                             terminalSession.clear()
@@ -121,6 +112,31 @@ struct TerminalView: View {
         }
     }
     
+    @ViewBuilder
+    private var commandInputField: some View {
+        #if os(iOS)
+        TextField("Enter command...", text: $inputText)
+            .textFieldStyle(.plain)
+            .font(.system(.body, design: .monospaced))
+            .foregroundColor(.green)
+            .autocorrectionDisabled()
+            .textInputAutocapitalization(.never)
+            .focused($isInputFocused)
+            .onSubmit {
+                sendCommand()
+            }
+        #else
+        TextField("Enter command...", text: $inputText)
+            .textFieldStyle(.plain)
+            .font(.system(.body, design: .monospaced))
+            .foregroundColor(.green)
+            .focused($isInputFocused)
+            .onSubmit {
+                sendCommand()
+            }
+        #endif
+    }
+    
     private func sendCommand() {
         guard !inputText.isEmpty else { return }
         terminalSession.send(command: inputText)
@@ -130,11 +146,11 @@ struct TerminalView: View {
 
 struct TerminalLineView: View {
     let line: TerminalLine
-    let fontSize: CGFloat
+    let fontSize: Double
     
     var body: some View {
         Text(attributedString)
-            .font(.system(size: fontSize, design: .monospaced))
+            .font(.system(size: CGFloat(fontSize), design: .monospaced))
             .textSelection(.enabled)
     }
     
@@ -213,19 +229,15 @@ struct QuickCommandsSheet: View {
                 }
             }
             .navigationTitle("Quick Commands")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayModeInline()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
             }
         }
+        #if os(iOS)
         .presentationDetents([.medium])
+        #endif
     }
-}
-
-#Preview {
-    TerminalView()
-        .environmentObject(ConnectionManager())
-        .environmentObject(SettingsManager())
 }

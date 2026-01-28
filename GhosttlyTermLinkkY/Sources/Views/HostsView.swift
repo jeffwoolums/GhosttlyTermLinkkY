@@ -77,7 +77,6 @@ struct HostRowView: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // Connection indicator
             Circle()
                 .fill(isConnected ? Color.green : Color.gray.opacity(0.3))
                 .frame(width: 10, height: 10)
@@ -124,31 +123,22 @@ struct AddHostSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Host Details") {
+                Section {
                     TextField("Display Name", text: $name)
-                        .textContentType(.name)
-                    
-                    TextField("Hostname / IP", text: $hostname)
-                        .textContentType(.URL)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                    
-                    TextField("Port", text: $port)
-                        .keyboardType(.numberPad)
+                    hostnameField
+                    portField
+                } header: {
+                    Text("Host Details")
                 }
                 
-                Section("Authentication") {
-                    TextField("Username", text: $username)
-                        .textContentType(.username)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                    
+                Section {
+                    usernameField
                     Toggle("Use SSH Key", isOn: $useKeyAuth)
-                    
                     if !useKeyAuth {
                         SecureField("Password", text: $password)
-                            .textContentType(.password)
                     }
+                } header: {
+                    Text("Authentication")
                 }
                 
                 Section {
@@ -158,7 +148,7 @@ struct AddHostSheet: View {
                 }
             }
             .navigationTitle("Add Host")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayModeInline()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -171,6 +161,38 @@ struct AddHostSheet: View {
                 }
             }
         }
+    }
+    
+    @ViewBuilder
+    private var hostnameField: some View {
+        #if os(iOS)
+        TextField("Hostname / IP", text: $hostname)
+            .autocorrectionDisabled()
+            .textInputAutocapitalization(.never)
+        #else
+        TextField("Hostname / IP", text: $hostname)
+        #endif
+    }
+    
+    @ViewBuilder
+    private var portField: some View {
+        #if os(iOS)
+        TextField("Port", text: $port)
+            .keyboardType(.numberPad)
+        #else
+        TextField("Port", text: $port)
+        #endif
+    }
+    
+    @ViewBuilder
+    private var usernameField: some View {
+        #if os(iOS)
+        TextField("Username", text: $username)
+            .autocorrectionDisabled()
+            .textInputAutocapitalization(.never)
+        #else
+        TextField("Username", text: $username)
+        #endif
     }
     
     private var isValid: Bool {
@@ -206,29 +228,26 @@ struct EditHostSheet: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Host Details") {
+                Section {
                     TextField("Display Name", text: $name)
-                    TextField("Hostname / IP", text: $hostname)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                    TextField("Port", text: $port)
-                        .keyboardType(.numberPad)
+                    hostnameField
+                    portField
+                } header: {
+                    Text("Host Details")
                 }
                 
-                Section("Authentication") {
-                    TextField("Username", text: $username)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                    
+                Section {
+                    usernameField
                     Toggle("Use SSH Key", isOn: $useKeyAuth)
-                    
                     if !useKeyAuth {
                         SecureField("Password", text: $password)
                     }
+                } header: {
+                    Text("Authentication")
                 }
             }
             .navigationTitle("Edit Host")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayModeInline()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -251,6 +270,38 @@ struct EditHostSheet: View {
         }
     }
     
+    @ViewBuilder
+    private var hostnameField: some View {
+        #if os(iOS)
+        TextField("Hostname / IP", text: $hostname)
+            .autocorrectionDisabled()
+            .textInputAutocapitalization(.never)
+        #else
+        TextField("Hostname / IP", text: $hostname)
+        #endif
+    }
+    
+    @ViewBuilder
+    private var portField: some View {
+        #if os(iOS)
+        TextField("Port", text: $port)
+            .keyboardType(.numberPad)
+        #else
+        TextField("Port", text: $port)
+        #endif
+    }
+    
+    @ViewBuilder
+    private var usernameField: some View {
+        #if os(iOS)
+        TextField("Username", text: $username)
+            .autocorrectionDisabled()
+            .textInputAutocapitalization(.never)
+        #else
+        TextField("Username", text: $username)
+        #endif
+    }
+    
     private var isValid: Bool {
         !name.isEmpty && !hostname.isEmpty && !username.isEmpty && Int(port) != nil
     }
@@ -266,9 +317,4 @@ struct EditHostSheet: View {
         connectionManager.updateHost(updated)
         dismiss()
     }
-}
-
-#Preview {
-    HostsView()
-        .environmentObject(ConnectionManager())
 }

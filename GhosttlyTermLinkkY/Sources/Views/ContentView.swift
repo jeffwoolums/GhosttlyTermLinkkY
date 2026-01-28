@@ -42,8 +42,10 @@ struct ContentView: View {
     }
 }
 
+#if DEBUG && canImport(PreviewsMacros)
 #Preview {
     ContentView()
         .environmentObject(ConnectionManager())
         .environmentObject(SettingsManager())
 }
+#endif

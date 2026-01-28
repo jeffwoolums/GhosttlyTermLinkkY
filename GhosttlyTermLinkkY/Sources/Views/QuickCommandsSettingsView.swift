@@ -53,9 +53,11 @@ struct QuickCommandsSettingsView: View {
             }
         }
         .navigationTitle("Quick Commands")
+        #if os(iOS)
         .toolbar {
             EditButton()
         }
+        #endif
         .sheet(isPresented: $showingAddCommand) {
             AddQuickCommandSheet()
         }
@@ -76,13 +78,10 @@ struct AddQuickCommandSheet: View {
         NavigationStack {
             Form {
                 TextField("Name", text: $name)
-                TextField("Command", text: $command)
-                    .fontDesign(.monospaced)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
+                commandTextField
             }
             .navigationTitle("Add Command")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayModeInline()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -96,6 +95,19 @@ struct AddQuickCommandSheet: View {
                 }
             }
         }
+    }
+    
+    @ViewBuilder
+    private var commandTextField: some View {
+        #if os(iOS)
+        TextField("Command", text: $command)
+            .fontDesign(.monospaced)
+            .autocorrectionDisabled()
+            .textInputAutocapitalization(.never)
+        #else
+        TextField("Command", text: $command)
+            .fontDesign(.monospaced)
+        #endif
     }
 }
 
@@ -111,13 +123,10 @@ struct EditQuickCommandSheet: View {
         NavigationStack {
             Form {
                 TextField("Name", text: $name)
-                TextField("Command", text: $commandText)
-                    .fontDesign(.monospaced)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
+                commandTextField
             }
             .navigationTitle("Edit Command")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayModeInline()
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
@@ -138,5 +147,18 @@ struct EditQuickCommandSheet: View {
                 commandText = command.command
             }
         }
+    }
+    
+    @ViewBuilder
+    private var commandTextField: some View {
+        #if os(iOS)
+        TextField("Command", text: $commandText)
+            .fontDesign(.monospaced)
+            .autocorrectionDisabled()
+            .textInputAutocapitalization(.never)
+        #else
+        TextField("Command", text: $commandText)
+            .fontDesign(.monospaced)
+        #endif
     }
 }

@@ -9,7 +9,7 @@ import SwiftUI
 @MainActor
 class SettingsManager: ObservableObject {
     // Terminal settings
-    @AppStorage("fontSize") var fontSize: CGFloat = 14
+    @AppStorage("fontSize") var fontSize: Double = 14
     @AppStorage("hapticFeedback") var hapticFeedback: Bool = true
     @AppStorage("keepScreenOn") var keepScreenOn: Bool = true
     
