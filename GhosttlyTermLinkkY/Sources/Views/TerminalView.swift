@@ -2,6 +2,9 @@
 //  TerminalView.swift
 //  GhosttlyTermLinkkY
 //
+//  Main terminal interface. Connects to server, streams output,
+//  supports tmux session selection.
+//
 
 import SwiftUI
 
@@ -11,12 +14,14 @@ struct TerminalView: View {
     @StateObject private var terminalSession = TerminalSession()
     @State private var inputText: String = ""
     @State private var showingQuickCommands = false
+    @State private var showingTmuxPicker = false
+    @State private var tmuxSessions: [String] = []
     @FocusState private var isInputFocused: Bool
-    
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Terminal output area
+                // Terminal output
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 0) {
@@ -37,13 +42,11 @@ struct TerminalView: View {
                         }
                     }
                 }
-                
-                Divider()
-                    .background(Color.green.opacity(0.5))
-                
+
+                Divider().background(Color.green.opacity(0.5))
+
                 // Input area
                 HStack(spacing: 8) {
-                    // Quick commands button
                     Button {
                         showingQuickCommands = true
                     } label: {
@@ -51,11 +54,9 @@ struct TerminalView: View {
                             .foregroundColor(.green)
                             .frame(width: 32, height: 32)
                     }
-                    
-                    // Command input
+
                     commandInputField
-                    
-                    // Send button
+
                     Button {
                         sendCommand()
                     } label: {
@@ -76,16 +77,13 @@ struct TerminalView: View {
                 ToolbarItem(placement: .navigation) {
                     ConnectionStatusBadge()
                 }
-                
+
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
-                        Button("Clear Screen") {
-                            terminalSession.clear()
-                        }
+                        Button("Clear Screen") { terminalSession.clear() }
+                        Button("List Sessions") { terminalSession.listSessions() }
                         Button("Reconnect") {
-                            Task {
-                                await connectionManager.reconnect()
-                            }
+                            Task { await connectionManager.reconnect() }
                         }
                         Divider()
                         Button("Send Ctrl+C", role: .destructive) {
@@ -109,9 +107,14 @@ struct TerminalView: View {
                     terminalSession.startSession()
                 }
             }
+            .onChange(of: connectionManager.connectionState) { _, newState in
+                if case .connected = newState {
+                    terminalSession.startSession()
+                }
+            }
         }
     }
-    
+
     @ViewBuilder
     private var commandInputField: some View {
         #if os(iOS)
@@ -122,21 +125,17 @@ struct TerminalView: View {
             .autocorrectionDisabled()
             .textInputAutocapitalization(.never)
             .focused($isInputFocused)
-            .onSubmit {
-                sendCommand()
-            }
+            .onSubmit { sendCommand() }
         #else
         TextField("Enter command...", text: $inputText)
             .textFieldStyle(.plain)
             .font(.system(.body, design: .monospaced))
             .foregroundColor(.green)
             .focused($isInputFocused)
-            .onSubmit {
-                sendCommand()
-            }
+            .onSubmit { sendCommand() }
         #endif
     }
-    
+
     private func sendCommand() {
         guard !inputText.isEmpty else { return }
         terminalSession.send(command: inputText)
@@ -147,13 +146,14 @@ struct TerminalView: View {
 struct TerminalLineView: View {
     let line: TerminalLine
     let fontSize: Double
-    
+
     var body: some View {
         Text(attributedString)
             .font(.system(size: CGFloat(fontSize), design: .monospaced))
             .textSelection(.enabled)
+            .lineLimit(nil)
     }
-    
+
     private var attributedString: AttributedString {
         var attributed = AttributedString(line.text)
         attributed.foregroundColor = line.color
@@ -163,7 +163,7 @@ struct TerminalLineView: View {
 
 struct ConnectionStatusBadge: View {
     @EnvironmentObject var connectionManager: ConnectionManager
-    
+
     var body: some View {
         HStack(spacing: 4) {
             Circle()
@@ -174,7 +174,7 @@ struct ConnectionStatusBadge: View {
                 .foregroundColor(.secondary)
         }
     }
-    
+
     private var statusColor: Color {
         switch connectionManager.connectionState {
         case .connected: return .green
@@ -183,7 +183,7 @@ struct ConnectionStatusBadge: View {
         case .error: return .red
         }
     }
-    
+
     private var statusText: String {
         switch connectionManager.connectionState {
         case .connected: return connectionManager.currentHost?.name ?? "Connected"
@@ -197,7 +197,7 @@ struct ConnectionStatusBadge: View {
 struct QuickCommandsSheet: View {
     let onSelect: (String) -> Void
     @Environment(\.dismiss) var dismiss
-    
+
     let commands = [
         ("Claude Code", "claude"),
         ("List Files", "ls -la"),
@@ -207,9 +207,10 @@ struct QuickCommandsSheet: View {
         ("NPM Install", "npm install"),
         ("NPM Run Dev", "npm run dev"),
         ("Python", "python3"),
+        ("Tmux Sessions", "tmux list-sessions"),
         ("Clear", "clear"),
     ]
-    
+
     var body: some View {
         NavigationStack {
             List {
@@ -218,8 +219,7 @@ struct QuickCommandsSheet: View {
                         onSelect(command)
                     } label: {
                         HStack {
-                            Text(name)
-                                .foregroundColor(.primary)
+                            Text(name).foregroundColor(.primary)
                             Spacer()
                             Text(command)
                                 .font(.system(.caption, design: .monospaced))
