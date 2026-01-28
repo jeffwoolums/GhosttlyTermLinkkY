@@ -10,7 +10,7 @@ let package = Package(
         .macOS(.v14)
     ],
     products: [
-        .library(
+        .executable(
             name: "GhosttlyTermLinkkY",
             targets: ["GhosttlyTermLinkkY"]),
     ],
@@ -19,7 +19,7 @@ let package = Package(
         // .package(url: "https://github.com/Lakr233/SwiftCitadel.git", from: "1.0.0"),
     ],
     targets: [
-        .target(
+        .executableTarget(
             name: "GhosttlyTermLinkkY",
             dependencies: [],
             path: "GhosttlyTermLinkkY/Sources"
