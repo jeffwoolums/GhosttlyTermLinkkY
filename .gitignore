@@ -54,3 +54,9 @@ Secrets.swift
 *.pem
 *.p12
 *.mobileprovision
+.env
+
+# Node
+node_modules/
+npm-debug.log*
+.npm
