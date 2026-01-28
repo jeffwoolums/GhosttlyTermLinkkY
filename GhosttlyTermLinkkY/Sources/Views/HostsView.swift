@@ -9,9 +9,27 @@ struct HostsView: View {
     @EnvironmentObject var connectionManager: ConnectionManager
     @State private var showingAddHost = false
     @State private var editingHost: SSHHost?
-    
+
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
+            // Custom header
+            HStack {
+                Text("Hosts")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                Spacer()
+                Button {
+                    showingAddHost = true
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title2)
+                        .foregroundColor(.green)
+                }
+            }
+            .padding()
+            .background(Color.black)
+
+            // Host list
             List {
                 Section {
                     ForEach(connectionManager.hosts) { host in
@@ -28,7 +46,7 @@ struct HostsView: View {
                                 } label: {
                                     Label("Delete", systemImage: "trash")
                                 }
-                                
+
                                 Button {
                                     editingHost = host
                                 } label: {
@@ -42,7 +60,7 @@ struct HostsView: View {
                 } footer: {
                     Text("Tap to connect. Hosts should be accessible via Tailscale or local network.")
                 }
-                
+
                 Section {
                     Button {
                         showingAddHost = true
@@ -52,21 +70,15 @@ struct HostsView: View {
                 }
             }
             .listStyle(.plain)
-            .navigationTitle("Hosts")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showingAddHost = true
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
-            .sheet(isPresented: $showingAddHost) {
+        }
+        .background(Color.black)
+        .sheet(isPresented: $showingAddHost) {
+            NavigationStack {
                 AddHostSheet()
             }
-            .sheet(item: $editingHost) { host in
+        }
+        .sheet(item: $editingHost) { host in
+            NavigationStack {
                 EditHostSheet(host: host)
             }
         }
@@ -76,25 +88,25 @@ struct HostsView: View {
 struct HostRowView: View {
     @EnvironmentObject var connectionManager: ConnectionManager
     let host: SSHHost
-    
+
     var body: some View {
         HStack(spacing: 12) {
             Circle()
                 .fill(isConnected ? Color.green : Color.gray.opacity(0.3))
                 .frame(width: 10, height: 10)
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(host.name)
                     .font(.headline)
-                
+
                 Text("\(host.username)@\(host.hostname):\(host.port)")
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .fontDesign(.monospaced)
             }
-            
+
             Spacer()
-            
+
             if isConnected {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(.green)
@@ -105,7 +117,7 @@ struct HostRowView: View {
         }
         .padding(.vertical, 4)
     }
-    
+
     private var isConnected: Bool {
         connectionManager.currentHost?.id == host.id && connectionManager.isConnected
     }
@@ -114,100 +126,78 @@ struct HostRowView: View {
 struct AddHostSheet: View {
     @EnvironmentObject var connectionManager: ConnectionManager
     @Environment(\.dismiss) var dismiss
-    
+
     @State private var name = ""
     @State private var hostname = ""
-    @State private var port = "22"
+    @State private var port = "3847"
     @State private var username = ""
     @State private var password = ""
     @State private var useKeyAuth = false
-    
+
     var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Display Name", text: $name)
-                    hostnameField
-                    portField
-                } header: {
-                    Text("Host Details")
-                }
-                
-                Section {
-                    usernameField
-                    Toggle("Use SSH Key", isOn: $useKeyAuth)
-                    if !useKeyAuth {
-                        SecureField("Password", text: $password)
-                    }
-                } header: {
-                    Text("Authentication")
-                }
-                
-                Section {
-                    Text("For Tailscale, use the device's Tailscale IP (100.x.x.x) or MagicDNS name.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
+        Form {
+            Section {
+                TextField("Display Name", text: $name)
+                #if os(iOS)
+                TextField("Hostname / IP", text: $hostname)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                #else
+                TextField("Hostname / IP", text: $hostname)
+                    .autocorrectionDisabled()
+                #endif
+                TextField("Port", text: $port)
+                    .keyboardType(.numberPad)
+            } header: {
+                Text("Host Details")
             }
-            .navigationTitle("Add Host")
-            .navigationBarTitleDisplayModeInline()
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+
+            Section {
+                #if os(iOS)
+                TextField("Username", text: $username)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                #else
+                TextField("Username", text: $username)
+                    .autocorrectionDisabled()
+                #endif
+                SecureField("Auth Token", text: $password)
+            } header: {
+                Text("Authentication")
+            }
+
+            Section {
+                Text("For Tailscale, use the device's Tailscale IP (100.x.x.x).\nPort 3847 for WebSocket server.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .navigationTitle("Add Host")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Add") {
+                    saveHost()
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Add") {
-                        saveHost()
-                    }
-                    .disabled(!isValid)
-                }
+                .disabled(!isValid)
             }
         }
     }
-    
-    @ViewBuilder
-    private var hostnameField: some View {
-        #if os(iOS)
-        TextField("Hostname / IP", text: $hostname)
-            .autocorrectionDisabled()
-            .textInputAutocapitalization(.never)
-        #else
-        TextField("Hostname / IP", text: $hostname)
-        #endif
-    }
-    
-    @ViewBuilder
-    private var portField: some View {
-        #if os(iOS)
-        TextField("Port", text: $port)
-            .keyboardType(.numberPad)
-        #else
-        TextField("Port", text: $port)
-        #endif
-    }
-    
-    @ViewBuilder
-    private var usernameField: some View {
-        #if os(iOS)
-        TextField("Username", text: $username)
-            .autocorrectionDisabled()
-            .textInputAutocapitalization(.never)
-        #else
-        TextField("Username", text: $username)
-        #endif
-    }
-    
+
     private var isValid: Bool {
         !name.isEmpty && !hostname.isEmpty && !username.isEmpty && Int(port) != nil
     }
-    
+
     private func saveHost() {
         let host = SSHHost(
             name: name,
             hostname: hostname,
-            port: Int(port) ?? 22,
+            port: Int(port) ?? 3847,
             username: username,
-            password: useKeyAuth ? nil : password,
+            password: password.isEmpty ? nil : password,
             useKeyAuth: useKeyAuth
         )
         connectionManager.addHost(host)
@@ -219,102 +209,80 @@ struct EditHostSheet: View {
     @EnvironmentObject var connectionManager: ConnectionManager
     @Environment(\.dismiss) var dismiss
     let host: SSHHost
-    
+
     @State private var name = ""
     @State private var hostname = ""
-    @State private var port = "22"
+    @State private var port = "3847"
     @State private var username = ""
     @State private var password = ""
     @State private var useKeyAuth = false
-    
+
     var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("Display Name", text: $name)
-                    hostnameField
-                    portField
-                } header: {
-                    Text("Host Details")
-                }
-                
-                Section {
-                    usernameField
-                    Toggle("Use SSH Key", isOn: $useKeyAuth)
-                    if !useKeyAuth {
-                        SecureField("Password", text: $password)
-                    }
-                } header: {
-                    Text("Authentication")
-                }
+        Form {
+            Section {
+                TextField("Display Name", text: $name)
+                #if os(iOS)
+                TextField("Hostname / IP", text: $hostname)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                #else
+                TextField("Hostname / IP", text: $hostname)
+                    .autocorrectionDisabled()
+                #endif
+                TextField("Port", text: $port)
+                    .keyboardType(.numberPad)
+            } header: {
+                Text("Host Details")
             }
-            .navigationTitle("Edit Host")
-            .navigationBarTitleDisplayModeInline()
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        updateHost()
-                    }
-                    .disabled(!isValid)
-                }
-            }
-            .onAppear {
-                name = host.name
-                hostname = host.hostname
-                port = String(host.port)
-                username = host.username
-                password = host.password ?? ""
-                useKeyAuth = host.useKeyAuth
+
+            Section {
+                #if os(iOS)
+                TextField("Username", text: $username)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                #else
+                TextField("Username", text: $username)
+                    .autocorrectionDisabled()
+                #endif
+                SecureField("Auth Token", text: $password)
+            } header: {
+                Text("Authentication")
             }
         }
+        .navigationTitle("Edit Host")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Cancel") { dismiss() }
+            }
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") {
+                    updateHost()
+                }
+                .disabled(!isValid)
+            }
+        }
+        .onAppear {
+            name = host.name
+            hostname = host.hostname
+            port = String(host.port)
+            username = host.username
+            password = host.password ?? ""
+            useKeyAuth = host.useKeyAuth
+        }
     }
-    
-    @ViewBuilder
-    private var hostnameField: some View {
-        #if os(iOS)
-        TextField("Hostname / IP", text: $hostname)
-            .autocorrectionDisabled()
-            .textInputAutocapitalization(.never)
-        #else
-        TextField("Hostname / IP", text: $hostname)
-        #endif
-    }
-    
-    @ViewBuilder
-    private var portField: some View {
-        #if os(iOS)
-        TextField("Port", text: $port)
-            .keyboardType(.numberPad)
-        #else
-        TextField("Port", text: $port)
-        #endif
-    }
-    
-    @ViewBuilder
-    private var usernameField: some View {
-        #if os(iOS)
-        TextField("Username", text: $username)
-            .autocorrectionDisabled()
-            .textInputAutocapitalization(.never)
-        #else
-        TextField("Username", text: $username)
-        #endif
-    }
-    
+
     private var isValid: Bool {
         !name.isEmpty && !hostname.isEmpty && !username.isEmpty && Int(port) != nil
     }
-    
+
     private func updateHost() {
         var updated = host
         updated.name = name
         updated.hostname = hostname
-        updated.port = Int(port) ?? 22
+        updated.port = Int(port) ?? 3847
         updated.username = username
-        updated.password = useKeyAuth ? nil : password
+        updated.password = password.isEmpty ? nil : password
         updated.useKeyAuth = useKeyAuth
         connectionManager.updateHost(updated)
         dismiss()

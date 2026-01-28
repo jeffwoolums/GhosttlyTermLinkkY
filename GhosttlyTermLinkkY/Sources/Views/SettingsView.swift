@@ -8,9 +8,19 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var settingsManager: SettingsManager
     @EnvironmentObject var connectionManager: ConnectionManager
-    
+
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
+            // Custom header
+            HStack {
+                Text("Settings")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                Spacer()
+            }
+            .padding()
+            .background(Color.black)
+
             List {
                 Section("Terminal") {
                     HStack {
@@ -19,12 +29,12 @@ struct SettingsView: View {
                         Stepper("\(Int(settingsManager.fontSize))", value: $settingsManager.fontSize, in: 10...24)
                             .fixedSize()
                     }
-                    
+
                     Toggle("Haptic Feedback", isOn: $settingsManager.hapticFeedback)
-                    
+
                     Toggle("Keep Screen On", isOn: $settingsManager.keepScreenOn)
                 }
-                
+
                 Section("Connection") {
                     HStack {
                         Text("Timeout")
@@ -37,20 +47,12 @@ struct SettingsView: View {
                         .pickerStyle(.segmented)
                         .frame(width: 180)
                     }
-                    
+
                     Toggle("Auto-Reconnect", isOn: $settingsManager.autoReconnect)
-                    
+
                     Toggle("Vibrate on Disconnect", isOn: $settingsManager.vibrateOnDisconnect)
                 }
-                
-                Section("Quick Commands") {
-                    NavigationLink {
-                        QuickCommandsSettingsView()
-                    } label: {
-                        Label("Manage Commands", systemImage: "bolt.fill")
-                    }
-                }
-                
+
                 Section("About") {
                     HStack {
                         Text("Version")
@@ -58,7 +60,7 @@ struct SettingsView: View {
                         Text("1.0.0")
                             .foregroundColor(.secondary)
                     }
-                    
+
                     Link(destination: URL(string: "https://github.com/jeffwoolums/GhosttlyTermLinkkY")!) {
                         HStack {
                             Text("GitHub Repository")
@@ -67,7 +69,7 @@ struct SettingsView: View {
                                 .foregroundColor(.secondary)
                         }
                     }
-                    
+
                     Link(destination: URL(string: "https://tailscale.com")!) {
                         HStack {
                             Text("Tailscale")
@@ -77,7 +79,7 @@ struct SettingsView: View {
                         }
                     }
                 }
-                
+
                 Section {
                     Button(role: .destructive) {
                         settingsManager.resetToDefaults()
@@ -86,9 +88,8 @@ struct SettingsView: View {
                     }
                 }
             }
-            .listStyle(.insetGrouped)
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
+            .listStyle(.plain)
         }
+        .background(Color.black)
     }
 }
