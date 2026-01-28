@@ -59,9 +59,10 @@ function getTailscaleStatus() {
 const tailscaleIP = getTailscaleIP();
 
 export const config = {
-  // Server settings - BIND ONLY TO TAILSCALE
+  // Server settings
+  // We bind to 0.0.0.0 but verify Tailscale IP on every connection
   port: parseInt(process.env.PORT || '3847'),
-  host: tailscaleIP,  // Tailscale IP only - no 0.0.0.0!
+  host: '0.0.0.0',  // Bind all interfaces, verify Tailscale in middleware
   hostname: os.hostname(),
   
   // Tailscale

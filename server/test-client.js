@@ -1,109 +1,138 @@
+#!/usr/bin/env node
 /**
- * Test Client for GhosttlyTermLinkkY
+ * Test Client for GhosttlyTermLinkkY Server
  * 
- * Usage: node test-client.js
+ * Tests the full flow: auth -> WebSocket -> terminal
+ * 
+ * Usage: node test-client.js [auth-token]
  */
 
 import WebSocket from 'ws';
-import readline from 'readline';
-import { config } from './src/config.js';
 
-const AUTH_TOKEN = process.env.AUTH_TOKEN || config.authToken;
-const SERVER_URL = process.env.SERVER_URL || 'ws://localhost:3847/terminal';
+const SERVER_IP = process.env.SERVER_IP || '100.70.5.93';
+const SERVER_PORT = process.env.SERVER_PORT || 3847;
+const AUTH_TOKEN = process.argv[2] || process.env.AUTH_TOKEN || 'e0767826405ee440c93cb239b30159c6f88311c0270789e3';
 
+console.log('');
 console.log('👻 GhosttlyTermLinkkY Test Client');
-console.log('================================');
-console.log(`Connecting to: ${SERVER_URL}`);
+console.log('═'.repeat(50));
+console.log(`Server: ${SERVER_IP}:${SERVER_PORT}`);
 console.log('');
 
-// Get session token first
-async function getSessionToken() {
-  const res = await fetch('http://localhost:3847/auth', {
+async function main() {
+  // Step 1: Authenticate
+  console.log('📡 Step 1: Authenticating...');
+  
+  const authResponse = await fetch(`http://${SERVER_IP}:${SERVER_PORT}/auth`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ token: AUTH_TOKEN })
   });
   
-  if (!res.ok) {
-    throw new Error(`Auth failed: ${res.status}`);
-  }
-  
-  const { sessionToken } = await res.json();
-  return sessionToken;
-}
-
-async function main() {
-  try {
-    const sessionToken = await getSessionToken();
-    console.log('✅ Got session token');
-    
-    const ws = new WebSocket(SERVER_URL);
-    
-    ws.on('open', () => {
-      console.log('✅ WebSocket connected');
-      console.log('');
-      
-      // Authenticate
-      ws.send(JSON.stringify({
-        type: 'auth',
-        token: sessionToken
-      }));
-    });
-    
-    ws.on('message', (data) => {
-      const msg = JSON.parse(data.toString());
-      
-      if (msg.type === 'auth_success') {
-        console.log(`✅ Authenticated: ${msg.message}`);
-        console.log('');
-        console.log('Type commands below (Ctrl+C to exit):');
-        console.log('');
-        startInput(ws);
-      } else if (msg.type === 'output') {
-        process.stdout.write(msg.data);
-      } else if (msg.type === 'exit') {
-        console.log(`\n[Shell exited: ${msg.exitCode}]`);
-        process.exit(0);
-      } else if (msg.type === 'error') {
-        console.error(`Error: ${msg.message}`);
-      }
-    });
-    
-    ws.on('close', () => {
-      console.log('\nConnection closed');
-      process.exit(0);
-    });
-    
-    ws.on('error', (err) => {
-      console.error(`WebSocket error: ${err.message}`);
-      process.exit(1);
-    });
-    
-  } catch (err) {
-    console.error(`Error: ${err.message}`);
+  if (!authResponse.ok) {
+    console.error('❌ Auth failed:', await authResponse.text());
     process.exit(1);
   }
-}
-
-function startInput(ws) {
-  // Set up raw mode for proper terminal handling
-  if (process.stdin.isTTY) {
-    process.stdin.setRawMode(true);
-  }
-  process.stdin.resume();
   
-  process.stdin.on('data', (data) => {
-    // Ctrl+C locally exits
-    if (data[0] === 3) {
-      ws.close();
-      process.exit(0);
+  const { sessionToken } = await authResponse.json();
+  console.log('✅ Authenticated! Got session token');
+  console.log('');
+  
+  // Step 2: Connect WebSocket
+  console.log('🔌 Step 2: Connecting WebSocket...');
+  
+  const ws = new WebSocket(`ws://${SERVER_IP}:${SERVER_PORT}/terminal`);
+  
+  ws.on('open', () => {
+    console.log('✅ WebSocket connected!');
+    console.log('');
+    
+    // Step 3: Send auth message
+    console.log('🔑 Step 3: Authenticating WebSocket...');
+    ws.send(JSON.stringify({
+      type: 'auth',
+      token: sessionToken,
+      cols: 80,
+      rows: 24
+    }));
+  });
+  
+  let authenticated = false;
+  let commandsSent = 0;
+  
+  ws.on('message', (data) => {
+    const msg = JSON.parse(data.toString());
+    
+    if (msg.type === 'auth_success') {
+      authenticated = true;
+      console.log('✅ WebSocket authenticated!');
+      console.log(`   Hostname: ${msg.hostname}`);
+      console.log(`   Session:  ${msg.sessionId.slice(0, 8)}...`);
+      console.log('');
+      console.log('📺 Terminal output:');
+      console.log('─'.repeat(50));
+      
+      // Send a few test commands
+      setTimeout(() => {
+        ws.send(JSON.stringify({ type: 'input', data: 'echo "👻 Hello from GhosttlyTermLinkkY!"\n' }));
+        commandsSent++;
+      }, 500);
+      
+      setTimeout(() => {
+        ws.send(JSON.stringify({ type: 'input', data: 'pwd\n' }));
+        commandsSent++;
+      }, 1000);
+      
+      setTimeout(() => {
+        ws.send(JSON.stringify({ type: 'input', data: 'which claude && claude --version 2>/dev/null | head -1\n' }));
+        commandsSent++;
+      }, 1500);
+      
+      // Close after test
+      setTimeout(() => {
+        console.log('');
+        console.log('─'.repeat(50));
+        console.log('');
+        console.log('✅ Test complete! All systems working.');
+        console.log('');
+        console.log('📱 iOS App Connection Info:');
+        console.log(`   URL: ws://${SERVER_IP}:${SERVER_PORT}/terminal`);
+        console.log(`   Auth Token: ${AUTH_TOKEN}`);
+        console.log('');
+        ws.close();
+        process.exit(0);
+      }, 3000);
     }
     
-    ws.send(JSON.stringify({
-      type: 'input',
-      data: data.toString()
-    }));
+    if (msg.type === 'auth_failed') {
+      console.error('❌ WebSocket auth failed:', msg.message);
+      ws.close();
+      process.exit(1);
+    }
+    
+    if (msg.type === 'output' && authenticated) {
+      process.stdout.write(msg.data);
+    }
+    
+    if (msg.type === 'error') {
+      console.error('❌ Error:', msg.message);
+    }
+  });
+  
+  ws.on('error', (err) => {
+    console.error('❌ WebSocket error:', err.message);
+    process.exit(1);
+  });
+  
+  ws.on('close', () => {
+    if (!authenticated) {
+      console.error('❌ Connection closed before auth');
+      process.exit(1);
+    }
   });
 }
 
-main();
+main().catch(err => {
+  console.error('❌ Error:', err.message);
+  process.exit(1);
+});

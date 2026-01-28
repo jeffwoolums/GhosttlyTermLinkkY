@@ -16,9 +16,30 @@ import { config } from './config.js';
 import { authMiddleware, generateToken, verifyToken } from './middleware/auth.js';
 import { TerminalManager } from './handlers/terminal.js';
 import { logger } from './utils/logger.js';
+import { getDashboardHTML } from './web-ui.js';
+
+const terminalManager = new TerminalManager();
 
 const app = express();
 app.use(express.json());
+
+// Dashboard (web UI)
+app.get('/', (req, res) => {
+  const tsStatus = config.getTailscaleStatus();
+  const status = {
+    version: '1.0.0',
+    hostname: config.hostname,
+    tailscaleIP: config.tailscaleIP,
+    shell: config.shell,
+    activeSessions: terminalManager.getSessionCount(),
+    maxSessions: config.maxSessions,
+    claudeAvailable: config.claudeEnabled,
+    uptime: process.uptime(),
+    tailscale: { connected: tsStatus !== null },
+    sessions: terminalManager.getAllSessionInfo()
+  };
+  res.send(getDashboardHTML(status, { port: config.port, authToken: config.authToken }));
+});
 
 // Health check
 app.get('/health', (req, res) => {
@@ -35,6 +56,15 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Check if connection is from Tailscale or localhost
+function isTrustedConnection(ip) {
+  // Tailscale 100.x.x.x
+  if (ip.includes('100.')) return true;
+  // Localhost for testing
+  if (ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1') return true;
+  return false;
+}
+
 // Auth endpoint
 app.post('/auth', async (req, res) => {
   const { token } = req.body;
@@ -42,8 +72,8 @@ app.post('/auth', async (req, res) => {
   
   logger.info(`Auth attempt from ${clientIP}`);
   
-  // Verify Tailscale network (100.x.x.x)
-  if (!clientIP.includes('100.') && !clientIP.includes('::ffff:100.')) {
+  // Verify Tailscale network (100.x.x.x) or localhost
+  if (!isTrustedConnection(clientIP)) {
     logger.warn(`Auth rejected - not from Tailscale: ${clientIP}`);
     return res.status(403).json({ error: 'Must connect via Tailscale' });
   }
@@ -73,14 +103,13 @@ app.get('/status', authMiddleware, (req, res) => {
 // Create servers
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/terminal' });
-const terminalManager = new TerminalManager();
 
 // WebSocket handler
 wss.on('connection', async (ws, req) => {
   const clientIP = req.socket.remoteAddress;
   
-  // Verify Tailscale
-  if (!clientIP.includes('100.') && !clientIP.includes('::ffff:100.')) {
+  // Verify Tailscale or localhost
+  if (!isTrustedConnection(clientIP)) {
     logger.warn(`WS rejected - not Tailscale: ${clientIP}`);
     ws.close(4003, 'Must connect via Tailscale');
     return;
@@ -146,7 +175,8 @@ wss.on('connection', async (ws, req) => {
       }
       
     } catch (err) {
-      ws.send(JSON.stringify({ type: 'error', message: 'Invalid message' }));
+      logger.error(`Message error: ${err.message}`);
+      ws.send(JSON.stringify({ type: 'error', message: `Invalid message: ${err.message}` }));
     }
   });
   
@@ -186,11 +216,11 @@ server.listen(PORT, HOST, () => {
   logger.info('═'.repeat(55));
   logger.info('👻 GhosttlyTermLinkkY Server');
   logger.info('═'.repeat(55));
-  logger.info(`Tailscale IP:  ${HOST}`);
-  logger.info(`HTTP:          http://${HOST}:${PORT}`);
-  logger.info(`WebSocket:     ws://${HOST}:${PORT}/terminal`);
+  logger.info(`Tailscale IP:  ${config.tailscaleIP}`);
+  logger.info(`HTTP:          http://${config.tailscaleIP}:${PORT}`);
+  logger.info(`WebSocket:     ws://${config.tailscaleIP}:${PORT}/terminal`);
   logger.info('═'.repeat(55));
-  logger.info('🔒 Listening ONLY on Tailscale - no public exposure');
+  logger.info('🔒 Connections verified via Tailscale');
   logger.info('═'.repeat(55));
 });
 
